@@ -5,7 +5,7 @@ export interface UserProps {
   email: string;
   name: string;
   googleId: string;
-  profilePicture?: string; 
+  profilePicture?: string;
   createdAt: Date;
   updatedAt?: Date;
   lastLogin?: Date;
