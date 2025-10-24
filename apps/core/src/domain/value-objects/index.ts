@@ -1,4 +1,4 @@
-export * from './DataRange';
+export * from './DateRange';
 export * from './Money';
 export * from './CityId';
 export * from './UserId';

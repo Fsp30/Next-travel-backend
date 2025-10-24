@@ -1,6 +1,6 @@
 import { isAfter, differenceInDays, isBefore } from 'date-fns';
 
-export class DataRange {
+export class DateRange {
   private constructor(
     public readonly startDate: Date,
     public readonly endDate: Date
@@ -8,14 +8,14 @@ export class DataRange {
     this.validate();
   }
 
-  static create(startDate: Date, endDate: Date): DataRange {
-    return new DataRange(startDate, endDate);
+  static create(startDate: Date, endDate: Date): DateRange {
+    return new DateRange(startDate, endDate);
   }
 
   static createFormStrings(
     startDateStr: string,
     endDateStr: string
-  ): DataRange {
+  ): DateRange {
     const start = new Date(startDateStr);
     const end = new Date(endDateStr);
 
@@ -23,7 +23,7 @@ export class DataRange {
       throw new Error('Formato de data inválido');
     }
 
-    return new DataRange(start, end);
+    return new DateRange(start, end);
   }
 
   private validate(): void {
