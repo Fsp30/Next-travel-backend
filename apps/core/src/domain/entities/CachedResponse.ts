@@ -24,11 +24,11 @@ export interface AccommodationCosts {
 }
 
 export interface CachedResponseData {
-  cityInfo: string; 
+  cityInfo: string;
   weatherInfo?: WeatherInfo;
   transportCosts?: TransportCosts;
   accommodationCosts?: AccommodationCosts;
-  generatedText?: string; 
+  generatedText?: string;
 }
 
 export interface CachedResponseProps {
@@ -106,7 +106,7 @@ export class CachedResponse {
   getRemainingTTL(): number {
     const now = new Date();
     const remainingMs = this.props.expiresAt.getTime() - now.getTime();
-    return Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24))); 
+    return Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
   }
 
   getTTLInSeconds(): number {
