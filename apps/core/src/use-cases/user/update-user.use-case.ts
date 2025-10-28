@@ -34,8 +34,10 @@ export class UpdateUserUseCase extends BaseUseCase<
       existingUser.updateName(validatedData.name);
     }
 
-    if (validatedData.profile) {
-      existingUser.updateProfilePicture(validatedData.profile);
+    if (validatedData.profilePicture === null) {
+      existingUser.removeProfilePicture();
+    } else if (validatedData.profilePicture) {
+      existingUser.updateProfilePicture(validatedData.profilePicture);
     }
 
     const updatedUser = await this.userRepository.update(existingUser);
