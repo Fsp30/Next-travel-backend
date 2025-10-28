@@ -1,11 +1,11 @@
 import { User } from '../../domain/entities/User';
 
 export interface GoogleUserInfo {
-  sub: string;
+  sub: string; 
   email: string;
   name: string;
   picture?: string;
-  email_verifield: string;
+  email_verified: boolean; 
 }
 
 export interface AuthTokens {
@@ -14,15 +14,20 @@ export interface AuthTokens {
   expiresIn: number;
 }
 
+export interface TokenPayload {
+  userId: string;
+  email: string;
+}
+
 export interface IAuthService {
   verifyGoogleToken(token: string): Promise<GoogleUserInfo>;
-  verifyAccessToken(token: string): Promise<{ userId: string; email: string }>;
-  verifyRefreshToken(token: string): Promise<{ userId: string }>;
 
   generateAccessToken(user: User): Promise<string>;
-  generateRefreshToken(user: User): Promise<string>;
+  verifyAccessToken(token: string): Promise<TokenPayload>;
 
-  refresAccessToken(refreshToken: string): Promise<AuthTokens>;
+  generateRefreshToken(user: User): Promise<string>;
+  verifyRefreshToken(token: string): Promise<{ userId: string }>;
+  refreshAccessToken(refreshToken: string): Promise<AuthTokens>;
 
   revokeTokens(userId: string): Promise<void>;
 
