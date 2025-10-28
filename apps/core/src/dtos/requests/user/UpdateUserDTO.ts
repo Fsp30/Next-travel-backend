@@ -11,9 +11,9 @@ export const UpdateUserDTOSchema = z
       .trim()
       .optional(),
 
-    profile: z.url('URL de imagem de perfil inválida').optional().nullable(),
+    profilePicture: z.url('URL de imagem de perfil inválida').optional().nullable(),
   })
-  .refine((data) => data.name || data.profile, {
+  .refine((data) => data.name || data.profilePicture, {
     message: 'Ao menos uma alteração deve ser feita',
     path: ['userId'],
   });
