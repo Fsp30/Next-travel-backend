@@ -37,7 +37,6 @@ export class UpdateUserUseCase extends BaseUseCase<
     if (validatedData.profile) {
       existingUser.updateProfilePicture(validatedData.profile);
     }
-    existingUser.registerLogin();
 
     const updatedUser = await this.userRepository.update(existingUser);
 
