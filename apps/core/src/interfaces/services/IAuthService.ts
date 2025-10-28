@@ -1,11 +1,11 @@
 import { User } from '../../domain/entities/User';
 
 export interface GoogleUserInfo {
-  sub: string; 
+  sub: string;
   email: string;
   name: string;
   picture?: string;
-  email_verified: boolean; 
+  email_verified: boolean;
 }
 
 export interface AuthTokens {

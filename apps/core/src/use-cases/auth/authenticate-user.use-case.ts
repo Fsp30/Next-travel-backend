@@ -1,7 +1,5 @@
-import { AuthenticateUserDTO } from "../../dtos";
+import { AuthenticateUserDTO } from '../../dtos';
 
-export type AuthenticateUserInput = AuthenticateUserDTO
+export type AuthenticateUserInput = AuthenticateUserDTO;
 
-export interface AuthenticateUserOutput{
-        
-}
+export interface AuthenticateUserOutput {}
