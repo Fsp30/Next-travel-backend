@@ -1,3 +1,3 @@
-export * from './CreateCityDto'
-export * from './GetCityDTO'
-export * from './getOrCreateCityDTO'
+export * from './CreateCityDto';
+export * from './GetCityDTO';
+export * from './getOrCreateCityDTO';
