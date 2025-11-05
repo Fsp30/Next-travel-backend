@@ -1,18 +1,16 @@
 import { User } from '../../domain/entities/User';
 import { UserId } from '../../domain/value-objects';
-import { CreateUserDTO } from '../../dtos';
 
 export interface IUserRepository {
-  create(data: CreateUserDTO): Promise<User>;
+  create(user: User): Promise<User>;
 
   findById(id: string | UserId): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   findByGoogleId(googleId: string): Promise<User | null>;
 
   update(user: User): Promise<User>;
-  updateLastLogin(id: string | UserId): Promise<void>;
 
-  delete(user: User): Promise<void>;
+  delete(id: string | UserId): Promise<void>;
 
   existsByEmail(email: string): Promise<boolean>;
   existsByGoogleId(googleId: string): Promise<boolean>;
