@@ -1,15 +1,33 @@
-import z from 'zod';
+import { z, ipv4, ipv6 } from 'zod';
 
 export const GetDestinationInfoDTOSchema = z
   .object({
-    cityId: z.uuidv4('cityId Inválido').optional(),
+    citySlug: z.string().min(1, 'Slug da cidade é obrigatório'),
 
-    citySlug: z.string().min(1).optional,
+    startDate: z.coerce.date().optional(),
+    endDate: z.coerce.date().optional(),
+
+    ipAddress: z.union([ipv4(), ipv6()]).optional(),
+    userAgent: z.string().optional(),
   })
-  .refine((data) => data.cityId || data.citySlug, {
-    message: 'Ao menos um das cidades deve ser fornecida',
-    path: ['cityId'],
-  });
+  .refine(
+    (data) => {
+      if (data.endDate && !data.startDate) {
+        return false;
+      }
+      if (data.startDate && data.startDate < new Date()) {
+        return false;
+      }
+      if (data.startDate && data.endDate && data.endDate <= data.startDate) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Range de datas inválido',
+      path: ['startDate'],
+    }
+  );
 
 export type GetDestinationInfoDTO = z.infer<typeof GetDestinationInfoDTOSchema>;
 
