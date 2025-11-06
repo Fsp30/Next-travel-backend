@@ -15,7 +15,7 @@ export interface ICacheRepository {
     }>
   ): Promise<void>;
 
-  get(cityId: string | CityId): Promise<CachedResponse | null>;
+  get(key: string): Promise<string | null>;
   getTTL(cityId: string | CityId): Promise<null>;
   getMany(
     cityIds: Array<string | CityId>
