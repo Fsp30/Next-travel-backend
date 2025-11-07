@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-export const WeatherInfoDTOSchema = z.object({
+const WeatherInfoDTOSchema = z.object({
   temperature: z.number().optional(),
   condition: z.string().optional(),
   humidity: z.number().optional(),
   description: z.string().optional(),
 });
 
-export const TransportCostsDTOSchema = z.object({
+const TransportCostsDTOSchema = z.object({
   busMin: z.number().optional(),
   busMax: z.number().optional(),
   flightMin: z.number().optional(),
