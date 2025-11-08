@@ -9,6 +9,10 @@ export class CityId {
     return new CityId(value ?? randomUUID());
   }
 
+  static fromString(value: string): CityId {
+    return new CityId(value);
+  }
+
   private validate(): void {
     if (!this.value || this.value.trim().length === 0) {
       throw new Error('CityId não pode ser vazio');
