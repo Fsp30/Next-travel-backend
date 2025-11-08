@@ -3,6 +3,7 @@ import { z, ipv4, ipv6 } from 'zod';
 export const GetDestinationInfoDTOSchema = z
   .object({
     citySlug: z.string().min(1, 'Slug da cidade é obrigatório'),
+    userId: z.uuidv4().optional(),
 
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().optional(),
