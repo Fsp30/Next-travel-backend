@@ -1,1 +1,1 @@
-export * from './wikipedia-service';
+export * from './wikipedia-service/wikipedia-base.service';
