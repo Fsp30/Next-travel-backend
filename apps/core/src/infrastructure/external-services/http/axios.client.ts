@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import axiosRetry from 'axios-retry';
 
 export class AxiosClient {
   private readonly client: AxiosInstance;
@@ -10,6 +11,20 @@ export class AxiosClient {
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Next-Travel/0.1',
+      },
+    });
+    axiosRetry(this.client, {
+      retries: 3,
+      retryDelay: (retryCount) => {
+        return Math.pow(2, retryCount) * 1000;
+      },
+      retryCondition: (error) => {
+        return (
+          axiosRetry.isNetworkError(error) ||
+          axiosRetry.isRetryableError(error) ||
+          error.response?.status === 429 ||
+          (error.response?.status ?? 0) >= 500
+        );
       },
     });
   }
