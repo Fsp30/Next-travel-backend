@@ -2,7 +2,7 @@ import {
   WikipediaSearchDTO,
   WikipediaSearchDTOSchema,
   mapWikipediaSearchToDTO,
-} from '../../../dtos/responses/external-services/WikipediaSearchDTO';
+} from '../../../dtos/responses/external-services/wikipedia/WikipediaSearchDTO';
 import { WikipediaBaseService } from './wikipedia-base.service';
 
 export interface WikipediaSearchInput {

@@ -2,7 +2,7 @@ import {
   WikipediaSummaryDTO,
   WikipediaSummaryDTOSchema,
   mapWikipediaSummaryToDTO,
-} from '../../../dtos/responses/external-services/WikipediaSummaryDTO';
+} from '../../../dtos/responses/external-services/wikipedia/WikipediaSummaryDTO';
 import { WikipediaBaseService } from './wikipedia-base.service';
 
 export interface WikipediaSummaryInput {

@@ -2,7 +2,7 @@ import {
   mapWikipediaPageInfoToDTO,
   WikipediaPageInfoDTO,
   WikipediaPageInfoSchema,
-} from '../../../dtos/responses/external-services/WikipediaPageInfoDTO';
+} from '../../../dtos/responses/external-services/wikipedia/WikipediaPageInfoDTO';
 import { WikipediaBaseService } from './wikipedia-base.service';
 
 export interface WikipediaCityInfoInput {
