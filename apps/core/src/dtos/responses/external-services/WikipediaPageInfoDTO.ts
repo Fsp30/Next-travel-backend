@@ -16,7 +16,7 @@ export const WikipediaPageInfoSchema = z.object({
   lastModified: z.date().optional(),
 });
 
-export type WikipediaPageInfo = z.infer<typeof WikipediaPageInfoSchema>;
+export type WikipediaPageInfoDTO = z.infer<typeof WikipediaPageInfoSchema>;
 
 export function mapWikipediaPageInfoToDTO(data: {
   title?: string;
@@ -34,7 +34,7 @@ export function mapWikipediaPageInfoToDTO(data: {
     title?: string;
   }>;
   touched?: string;
-}): WikipediaPageInfo {
+}): WikipediaPageInfoDTO {
   return {
     title: data.title ?? '',
     extract: data.extract ?? '',
