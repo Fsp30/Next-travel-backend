@@ -15,7 +15,7 @@ export const WeatherDataSchema = z.object({
   timestamp: z.date(),
 });
 
-export type WeatherData = z.infer<typeof WeatherDataSchema>;
+export type WeatherCurrentDataDTO = z.infer<typeof WeatherDataSchema>;
 
 export function mapCurrentWeatherToDTO(data: {
   main?: {
@@ -38,7 +38,7 @@ export function mapCurrentWeatherToDTO(data: {
   };
   visibility?: number;
   dt?: number;
-}): WeatherData {
+}): WeatherCurrentDataDTO {
   return {
     temperature: data.main?.temp ?? 0,
     temperatureMin: data.main?.temp_min,
