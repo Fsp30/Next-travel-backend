@@ -1,6 +1,6 @@
-import { Coordinates } from '../../../domain/value-objects';
-import { BaseService } from '../../shared';
-import { AxiosClient } from '../http/axios.client';
+import { Coordinates } from '../../../../domain/value-objects';
+import { BaseService } from '../../../shared';
+import { AxiosClient } from '../../http/axios.client';
 
 export abstract class TransportBaseService<
   I = void,

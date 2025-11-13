@@ -1,5 +1,5 @@
-import { Coordinates } from '../../../domain/value-objects';
-import { TransportCostsDTO, TransportCostsDTOSchema } from '../../../dtos';
+import { Coordinates } from '../../../../domain/value-objects';
+import { TransportCostsDTO, TransportCostsDTOSchema } from '../../../../dtos';
 import { TransportBaseService } from './transport-base.service';
 
 export interface TransportCostsInput {
