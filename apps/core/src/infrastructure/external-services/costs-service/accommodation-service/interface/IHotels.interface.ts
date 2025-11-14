@@ -4,8 +4,8 @@ export interface HotelInfo {
   cityCode?: string;
   rating?: string;
   geoCode?: {
-    latitude: number;
-    longitude: number;
+    latitude?: number;
+    longitude?: number;
   };
 }
 
