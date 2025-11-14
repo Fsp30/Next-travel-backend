@@ -2,7 +2,7 @@ import axios from 'axios';
 import { BaseService } from '../../../shared';
 import { AxiosClient } from '../../http/axios.client';
 
-export abstract class AccomodationBaseService<
+export abstract class AccommodationBaseService<
   I = void,
   O = void,
 > extends BaseService<I, O> {
@@ -19,8 +19,8 @@ export abstract class AccomodationBaseService<
     this.clientSecret = process.env.ACCOMMODATION_API_SECRET_KEY || '';
 
     if (!this.clientId || !this.clientSecret) {
-      throw new Error(
-        'Variaveis ambientes de apis de acomodação não configuradas'
+      console.warn(
+        '[AccommodationBaseService] Variaveis ambientes de apis de acomodação não configuradas - mode estimated'
       );
     }
 
@@ -45,7 +45,7 @@ export abstract class AccomodationBaseService<
     );
 
     this.accessToken = data.access_token;
-    this.tokenExpiresAt = now + data.expires_in * 1000;
+    this.tokenExpiresAt = now + (data.expires_in - 60) * 1000;
 
     if (!this.accessToken) {
       throw new Error('Falha ao se autenticar com AMADEUS API');
@@ -58,5 +58,28 @@ export abstract class AccomodationBaseService<
       ...headers,
       Authorization: `Bearer ${token}`,
     };
+
+  }
+  protected mapCityToIataCode(city: string): string | null {
+    const cityMap: Record<string, string> = {
+      'São Paulo': 'SAO',
+      'Rio de Janeiro': 'RIO',
+      'Brasília': 'BSB',
+      'Salvador': 'SSA',
+      'Fortaleza': 'FOR',
+      'Recife': 'REC',
+      'Curitiba': 'CWB',
+      'Porto Alegre': 'POA',
+      'Florianópolis': 'FLN',
+      'Manaus': 'MAO',
+      'Belém': 'BEL',
+      'Belo Horizonte': 'BHZ',
+    };
+    return cityMap[city] || null
+  }
+
+  protected calculeteNights(chekIn: Date, checkout: Date): number{
+    const diffTime = Math.abs(checkout.getTime() - chekIn.getTime())
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 }
