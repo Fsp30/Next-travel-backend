@@ -58,28 +58,27 @@ export abstract class AccommodationBaseService<
       ...headers,
       Authorization: `Bearer ${token}`,
     };
-
   }
   protected mapCityToIataCode(city: string): string | null {
     const cityMap: Record<string, string> = {
       'São Paulo': 'SAO',
       'Rio de Janeiro': 'RIO',
-      'Brasília': 'BSB',
-      'Salvador': 'SSA',
-      'Fortaleza': 'FOR',
-      'Recife': 'REC',
-      'Curitiba': 'CWB',
+      Brasília: 'BSB',
+      Salvador: 'SSA',
+      Fortaleza: 'FOR',
+      Recife: 'REC',
+      Curitiba: 'CWB',
       'Porto Alegre': 'POA',
-      'Florianópolis': 'FLN',
-      'Manaus': 'MAO',
-      'Belém': 'BEL',
+      Florianópolis: 'FLN',
+      Manaus: 'MAO',
+      Belém: 'BEL',
       'Belo Horizonte': 'BHZ',
     };
-    return cityMap[city] || null
+    return cityMap[city] || null;
   }
 
-  protected calculeteNights(chekIn: Date, checkout: Date): number{
-    const diffTime = Math.abs(checkout.getTime() - chekIn.getTime())
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  protected calculeteNights(chekIn: Date, checkout: Date): number {
+    const diffTime = Math.abs(checkout.getTime() - chekIn.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 }
