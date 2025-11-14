@@ -82,7 +82,11 @@ export abstract class AccommodationBaseService<
     return cityMap[city] || null;
   }
 
-  protected calculeteNights(chekIn: Date, checkout: Date): number {
+  protected formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  protected calculateNights(chekIn: Date, checkout: Date): number {
     const diffTime = Math.abs(checkout.getTime() - chekIn.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
