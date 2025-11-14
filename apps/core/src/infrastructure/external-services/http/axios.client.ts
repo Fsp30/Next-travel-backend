@@ -29,8 +29,15 @@ export class AxiosClient {
     });
   }
 
-  async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
-    const response = await this.client.get<T>(url, { params });
+  async get<T>(
+    url: string,
+    params?: Record<string, unknown>,
+    headers?: Record<string, string>
+  ): Promise<T> {
+    const response = await this.client.get<T>(url, {
+      params,
+      headers,
+    });
     return response.data;
   }
 }
