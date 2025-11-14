@@ -59,6 +59,11 @@ export abstract class AccommodationBaseService<
       Authorization: `Bearer ${token}`,
     };
   }
+
+  protected hasValidCredentials(): boolean {
+    return !!(this.clientId && this.clientSecret);
+  }
+
   protected mapCityToIataCode(city: string): string | null {
     const cityMap: Record<string, string> = {
       'São Paulo': 'SAO',
