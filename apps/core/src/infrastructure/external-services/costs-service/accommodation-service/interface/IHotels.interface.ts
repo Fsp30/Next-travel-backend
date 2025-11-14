@@ -44,3 +44,41 @@ export interface HotelOffersResponse {
     }>;
   }>;
 }
+
+interface AmadeusHotelOffer {
+  id?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  price?: {
+    currency?: string;
+    total?: string;
+  };
+  room?: {
+    typeEstimated?: {
+      category?: string;
+    };
+  };
+}
+
+export interface HotelWithOffers {
+  hotel?: {
+    hotelId?: string;
+    name?: string;
+  };
+  offers?: AmadeusHotelOffer[];
+}
+
+export interface HotelOffersResponse {
+  data?: HotelWithOffers[];
+}
+
+interface PriceRange {
+  min: number;
+  max: number;
+}
+
+export interface TotalCostsBreakdown {
+  budget: PriceRange;
+  midRange: PriceRange;
+  luxury: PriceRange;
+}
