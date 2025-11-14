@@ -210,7 +210,6 @@ export class CalculateAccommodationCostsService extends AccommodationBaseService
   }
 
   private async fetchHotelOffers(
-        
     hotelIds: string,
     checkIn: Date,
     checkOut: Date,
