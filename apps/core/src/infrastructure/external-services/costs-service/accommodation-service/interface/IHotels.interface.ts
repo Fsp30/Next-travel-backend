@@ -9,7 +9,7 @@ export interface HotelInfo {
   };
 }
 
-interface AmadeusHotelListResponse {
+export interface HotelListResponse {
   data?: Array<{
     hotelId?: string;
     name?: string;
@@ -22,7 +22,7 @@ interface AmadeusHotelListResponse {
   }>;
 }
 
-interface AmadeusHotelOffersResponse {
+export interface HotelOffersResponse {
   data?: Array<{
     hotel?: {
       hotelId?: string;
