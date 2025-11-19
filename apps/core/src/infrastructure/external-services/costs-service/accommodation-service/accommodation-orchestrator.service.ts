@@ -33,7 +33,7 @@ export interface AccommodationServiceOutput {
   };
 }
 
-export class AccommodiationOrchestratorService extends AccommodationBaseService<
+export class AccommodationOrchestratorService extends AccommodationBaseService<
   AccommodationServiceInput,
   AccommodationServiceOutput
 > {
