@@ -1,5 +1,5 @@
 import { AccomodationCostsDTO } from '../../../../dtos';
-import { HotelInfo, TotalCostsBreakdown } from './interface/IHotels.interface';
+import { TotalCostsBreakdown } from './interface/IHotels.interface';
 import { AccommodationBaseService } from './accommodation-base.service';
 import {
   ListHotelsInput,
@@ -27,10 +27,7 @@ export interface AccommodationServiceOutput {
     totalCosts: TotalCostsBreakdown;
     source: 'api' | 'estimated';
   };
-  hotels?: {
-    hotels: HotelInfo[];
-    total: number;
-  };
+  hotels?: ListHotelsOutput;
 }
 
 export class AccommodationOrchestratorService extends AccommodationBaseService<
@@ -49,14 +46,19 @@ export class AccommodationOrchestratorService extends AccommodationBaseService<
   ): Promise<AccommodationServiceOutput> {
     this.validateInput(input);
 
-    const costs = await this.fetchCosts(input);
+    const result = await this.fetchCosts(input);
 
     const hotels = input.includeHotelsList
       ? await this.fetchHotels(input)
       : this.emptyResult();
 
     return {
-      costs,
+      costs: {
+        data: result.data,
+        nights: result.nights,
+        totalCosts: result.totalCosts,
+        source: result.source,
+      },
       hotels,
     };
   }
