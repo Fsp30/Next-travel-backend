@@ -13,8 +13,3 @@ export interface CostSources {
   transport: 'api' | 'estimated';
   accommodation: 'api' | 'estimated';
 }
-
-
-
-
- 
