@@ -59,7 +59,7 @@ export class CostsOrchestratorService extends BaseService<
   }
 
   async execute(input: CostsServiceInput): Promise<CostsServiceOutput> {
-    this.validateInput(input); 
+    this.validateInput(input);
 
     const nights = this.calculateNights(input.startDate, input.endDate);
 
