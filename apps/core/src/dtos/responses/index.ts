@@ -4,3 +4,4 @@ export * from './search/SearchHistoryResponseDTO';
 export * from './user/UserResponseDTO';
 export * from './auth/AuthResponseDTO';
 export * from './cache';
+export * from './external-services';
