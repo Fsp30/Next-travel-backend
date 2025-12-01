@@ -51,7 +51,7 @@ export const GetDestinationInfoDTOSchema = z
 
     ipAddress: z.union([ipv4(), ipv6()]).optional(),
 
-    userAgent: z // ✅ NOVA VALIDAÇÃO: Se originCoordinates for fornecido, origin deve ser obrigatório
+    userAgent: z
       .string()
       .max(500, 'User agent muito longo')
       .optional(),
