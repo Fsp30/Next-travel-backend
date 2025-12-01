@@ -2,12 +2,11 @@ import { ipv4, ipv6, z } from 'zod';
 
 const CoordinatesSchema = z.object({
   lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180)
+  lng: z.number().min(-180).max(180),
 });
 
 export const GetDestinationInfoDTOSchema = z
   .object({
-    
     cityName: z
       .string()
       .min(2, 'Nome da cidade deve ter pelo menos 2 caracteres')
@@ -27,7 +26,6 @@ export const GetDestinationInfoDTOSchema = z
       .trim()
       .default('Brasil'),
 
-
     origin: z
       .string()
       .min(2, 'Nome da origem deve ter pelo menos 2 caracteres')
@@ -35,14 +33,10 @@ export const GetDestinationInfoDTOSchema = z
       .trim()
       .optional(),
 
-    originCoordinates: CoordinatesSchema
-      .optional(),
+    originCoordinates: CoordinatesSchema.optional(),
 
-    userId: z
-      .uuid('ID do usuário deve ser um UUID válido')
-      .optional(),
+    userId: z.uuid('ID do usuário deve ser um UUID válido').optional(),
 
-    
     startDate: z.coerce
       .date({
         error: () => ({ message: 'Data de início inválida' }),
@@ -55,8 +49,7 @@ export const GetDestinationInfoDTOSchema = z
       })
       .optional(),
 
-    ipAddress: z.union([ipv4(), ipv6()])
-      .optional(),
+    ipAddress: z.union([ipv4(), ipv6()]).optional(),
 
     userAgent: z // ✅ NOVA VALIDAÇÃO: Se originCoordinates for fornecido, origin deve ser obrigatório
       .string()
@@ -64,7 +57,7 @@ export const GetDestinationInfoDTOSchema = z
       .optional(),
 
     incluedSummary: z.boolean().optional(),
-    incluedSearch: z.boolean().optional()
+    incluedSearch: z.boolean().optional(),
   })
   .refine(
     (data) => {
@@ -135,9 +128,7 @@ export const GetDestinationInfoDTOSchema = z
     }
   );
 
-export type GetDestinationInfoDTO = z.infer<
-  typeof GetDestinationInfoDTOSchema
->;
+export type GetDestinationInfoDTO = z.infer<typeof GetDestinationInfoDTOSchema>;
 
 export function validateGetDestinationInfoDTO(
   data: unknown
