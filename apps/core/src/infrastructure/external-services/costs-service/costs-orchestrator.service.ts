@@ -1,6 +1,6 @@
 import { Coordinates } from '../../../domain/value-objects';
 import {
-  AccomodationCostsDTO,
+  AccommodationCostsDTO,
   CostEstimateDTO,
   CostEstimateDTOSchema,
   TransportCostsDTO,
@@ -213,7 +213,7 @@ export class CostsOrchestratorService extends BaseService<
 
   private buildCostEstimate(
     transport: TransportCostsDTO,
-    accommodation: AccomodationCostsDTO,
+    accommodation: AccommodationCostsDTO,
     nights: number
   ): CostEstimateDTO {
     const dailyBudget = this.calculateDailyBudget(accommodation);
@@ -225,7 +225,7 @@ export class CostsOrchestratorService extends BaseService<
 
     return {
       transport,
-      accomodation: accommodation,
+      accommodation: accommodation,
       estimateDailyBudget: dailyBudget,
       totalEstimate,
       currency: 'BRL',
@@ -233,7 +233,7 @@ export class CostsOrchestratorService extends BaseService<
   }
 
   private calculateDailyBudget(
-    accommodation: AccomodationCostsDTO
+    accommodation: AccommodationCostsDTO
   ): DailyBudgetEstimate {
     const accommodationPerNight = {
       budget: this.calculateAverage(
@@ -259,7 +259,7 @@ export class CostsOrchestratorService extends BaseService<
 
   private calculateTotalEstimate(
     transport: TransportCostsDTO,
-    accommodation: AccomodationCostsDTO,
+    accommodation: AccommodationCostsDTO,
     nights: number
   ): TotalEstimate {
     const transportMin = this.getMinTransportCost(transport);
