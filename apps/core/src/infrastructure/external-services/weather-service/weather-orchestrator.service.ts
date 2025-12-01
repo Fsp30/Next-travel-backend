@@ -27,7 +27,7 @@ export interface WeatherOrchestratorInput {
   forecastDays?: number;
   targetMonth?: number;
   includeForecast: boolean;
-  incluedeSeasonal: boolean;
+  includeSeasonal: boolean;
 }
 
 export interface WeatherOrchestratorOutput {
@@ -69,7 +69,7 @@ export class WeatherOrchestratorService extends BaseService<
       input.includeForecast
         ? this.fetchForecastWeather(coordinates, input.forecastDays)
         : null,
-      input.incluedeSeasonal
+      input.includeSeasonal
         ? this.fetchSeasonWeather(coordinates, input.targetMonth)
         : null,
     ]);
