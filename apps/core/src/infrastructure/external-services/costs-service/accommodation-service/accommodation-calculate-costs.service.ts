@@ -1,6 +1,6 @@
 import {
-  AccomodationCostsDTO,
-  AccomodationCostsDTOSchema,
+  AccommodationCostsDTO,
+  AccommodationCostsDTOSchema,
 } from '../../../../dtos';
 import { AccommodationBaseService } from './accommodation-base.service';
 import {
@@ -17,7 +17,7 @@ export interface CalculateAccommodationCostsInput {
 }
 
 export interface CalculateAccommodationCostsOutput {
-  data: AccomodationCostsDTO;
+  data: AccommodationCostsDTO;
   nights: number;
   totalCosts: TotalCostsBreakdown;
   source: 'api' | 'estimated';
@@ -27,7 +27,7 @@ export class CalculateAccommodationCostsService extends AccommodationBaseService
   CalculateAccommodationCostsInput,
   CalculateAccommodationCostsOutput
 > {
-  private readonly estimatedPrices: Record<string, AccomodationCostsDTO> = {
+  private readonly estimatedPrices: Record<string, AccommodationCostsDTO> = {
     'São Paulo': {
       budget: { min: 80, max: 150 },
       midRange: { min: 150, max: 350 },
@@ -168,7 +168,7 @@ export class CalculateAccommodationCostsService extends AccommodationBaseService
     }
 
     const pricePerNight = this.categorizePrices(prices);
-    const validated = AccomodationCostsDTOSchema.safeParse(pricePerNight);
+    const validated = AccommodationCostsDTOSchema.safeParse(pricePerNight);
 
     if (!validated.success) {
       console.error(
@@ -254,7 +254,7 @@ export class CalculateAccommodationCostsService extends AccommodationBaseService
     return prices.sort((a, b) => a - b);
   }
 
-  private categorizePrices(prices: number[]): AccomodationCostsDTO {
+  private categorizePrices(prices: number[]): AccommodationCostsDTO {
     const p33 = Math.floor(prices.length * 0.33);
     const p66 = Math.floor(prices.length * 0.66);
 
@@ -276,7 +276,7 @@ export class CalculateAccommodationCostsService extends AccommodationBaseService
   }
 
   private buildOutput(
-    pricePerNight: AccomodationCostsDTO,
+    pricePerNight: AccommodationCostsDTO,
     nights: number,
     source: 'api' | 'estimated'
   ): CalculateAccommodationCostsOutput {
