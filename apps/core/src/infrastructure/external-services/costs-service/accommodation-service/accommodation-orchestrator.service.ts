@@ -1,4 +1,4 @@
-import { AccomodationCostsDTO } from '../../../../dtos';
+import { AccommodationCostsDTO } from '../../../../dtos';
 import { TotalCostsBreakdown } from './interface/IHotels.interface';
 import { AccommodationBaseService } from './accommodation-base.service';
 import {
@@ -22,7 +22,7 @@ export interface AccommodationServiceInput {
 
 export interface AccommodationServiceOutput {
   costs: {
-    data: AccomodationCostsDTO;
+    data: AccommodationCostsDTO;
     nights: number;
     totalCosts: TotalCostsBreakdown;
     source: 'api' | 'estimated';
