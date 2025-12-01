@@ -5,12 +5,10 @@ import { ICacheRepository } from '../../interfaces';
 import { BaseUseCase } from '../shared';
 
 export interface GetCachedResponseInput {
-  cityId: string | CityId;
-  startDate?: Date;
-  endDate?: Date;
+  cityId: string | CityId
 }
 
-export interface GetCachedResponseOutuput {
+export interface GetCachedResponseOutput {
   cachedResponse: CachedResponseDTO | null;
   isExpired: boolean;
   remainingTTL?: number;
@@ -18,7 +16,7 @@ export interface GetCachedResponseOutuput {
 
 export class GetCachedResponseUseCase extends BaseUseCase<
   GetCachedResponseInput,
-  GetCachedResponseOutuput
+  GetCachedResponseOutput
 > {
   constructor(private readonly cacheRepository: ICacheRepository) {
     super();
@@ -26,7 +24,7 @@ export class GetCachedResponseUseCase extends BaseUseCase<
 
   async execute(
     input: GetCachedResponseInput
-  ): Promise<GetCachedResponseOutuput> {
+  ): Promise<GetCachedResponseOutput> {
     const cityId =
       typeof input.cityId === 'string' ? input.cityId : input.cityId.toString();
 
