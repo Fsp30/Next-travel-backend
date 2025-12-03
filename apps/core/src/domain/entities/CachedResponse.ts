@@ -11,6 +11,13 @@ interface ForecastInfo {
   chanceOfRain?: number;
 }
 
+export enum season {
+  summer = 'summer',
+  autumn = 'autumn',
+  winter = 'winter',
+  spring = 'spring',
+}
+
 export interface WeatherInfo {
   current:
     | {
@@ -28,6 +35,12 @@ export interface WeatherInfo {
       }
     | undefined;
   forecast?: ForecastInfo[];
+  seasonal?: {
+    season: season;
+    averageTemperature: number;
+    averageRainfall: number;
+    description: string;
+  };
 }
 
 export interface TransportCosts {
