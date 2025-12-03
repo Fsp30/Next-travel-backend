@@ -17,6 +17,15 @@ export enum season {
   winter = 'winter',
   spring = 'spring',
 }
+export enum transportEnum {
+  api = 'api',
+  estimated = 'estimated',
+}
+
+export enum accommodationEnum {
+  api = 'api',
+  estimated = 'estimated',
+}
 
 export interface WeatherInfo {
   current:
@@ -43,6 +52,24 @@ export interface WeatherInfo {
   };
 }
 
+export interface CostsTotal {
+  transport?: TransportCosts;
+  accommodation?: AccommodationCosts;
+  estimateDailyBugdet?: {
+    bugdet?: number;
+    midRange?: number;
+    luxury?: number;
+  };
+  totalEstimate?: {
+    min?: number;
+    max?: number;
+  };
+  costsSources: {
+    transport: transportEnum;
+    accommodation: accommodationEnum;
+  };
+}
+
 export interface TransportCosts {
   busMin?: number;
   busMax?: number;
@@ -62,8 +89,7 @@ export interface AccommodationCosts {
 export interface CachedResponseData {
   cityInfo: string;
   weatherInfo?: WeatherInfo;
-  transportCosts?: TransportCosts;
-  accommodationCosts?: AccommodationCosts;
+  costsTotal?: CostsTotal;
   generatedText?: string;
 }
 
