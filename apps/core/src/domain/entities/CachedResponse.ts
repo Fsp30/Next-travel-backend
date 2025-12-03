@@ -1,10 +1,33 @@
 import { CityId } from '../value-objects/CityId';
 
-export interface WeatherInfo {
+interface ForecastInfo {
+  date: Date;
   temperature?: number;
+  temperatureMin?: number;
+  temperatureMax?: number;
   condition?: string;
   humidity?: number;
   description?: string;
+  chanceOfRain?: number;
+}
+
+export interface WeatherInfo {
+  current:
+    | {
+        temperature?: number;
+        temperatureMin?: number;
+        temperatureMax?: number;
+        feelsLike?: number;
+        condition?: string;
+        humidity?: number;
+        description?: string;
+        windSpeed?: number;
+        pressure?: number;
+        cloudiness?: number;
+        visibility?: number;
+      }
+    | undefined;
+  forecast?: ForecastInfo[];
 }
 
 export interface TransportCosts {
