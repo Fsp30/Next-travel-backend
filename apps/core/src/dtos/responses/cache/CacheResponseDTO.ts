@@ -40,7 +40,6 @@ export const CachedResponseDTOSchema = z.object({
 });
 
 export type CachedResponseDTO = z.infer<typeof CachedResponseDTOSchema>;
-
 export function mapCachedResponseToDTO(entity: {
   cityId: { toString(): string };
   responseData: {
@@ -75,7 +74,36 @@ export function mapCachedResponseToDTO(entity: {
 }): CachedResponseDTO {
   return {
     cityId: entity.cityId.toString(),
-    responseData: entity.responseData,
+    responseData: {
+      cityInfo: entity.responseData.cityInfo,
+      weatherInfo: entity.responseData.weatherInfo
+        ? {
+            temperature: entity.responseData.weatherInfo.temperature,
+            condition: entity.responseData.weatherInfo.condition,
+            humidity: entity.responseData.weatherInfo.humidity,
+            description: entity.responseData.weatherInfo.description,
+          }
+        : undefined,
+      transportCosts: entity.responseData.transportCosts
+        ? {
+            busMin: entity.responseData.transportCosts.busMin,
+            busMax: entity.responseData.transportCosts.busMax,
+            flightMin: entity.responseData.transportCosts.flightMin,
+            flightMax: entity.responseData.transportCosts.flightMax,
+          }
+        : undefined,
+      accommodationCosts: entity.responseData.accommodationCosts
+        ? {
+            budgetMin: entity.responseData.accommodationCosts.budgetMin,
+            budgetMax: entity.responseData.accommodationCosts.budgetMax,
+            midRangeMin: entity.responseData.accommodationCosts.midRangeMin,
+            midRangeMax: entity.responseData.accommodationCosts.midRangeMax,
+            luxuryMin: entity.responseData.accommodationCosts.luxuryMin,
+            luxuryMax: entity.responseData.accommodationCosts.luxuryMax,
+          }
+        : undefined,
+      generatedText: entity.responseData.generatedText,
+    },
     createdAt: entity.createdAt.toISOString(),
     expiresAt: entity.expiresAt.toISOString(),
     hitCount: entity.hitCount,
