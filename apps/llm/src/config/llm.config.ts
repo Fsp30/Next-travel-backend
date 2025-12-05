@@ -12,6 +12,8 @@ export const LLMConfig = {
   defaultLanguage: 'pt-BR',
 };
 
+export type LLMConfigType = typeof LLMConfig;
+
 export function validateLLMConfig(): void {
   if (!LLMConfig.apiKey) {
     throw new Error('[LLMConfig] API KEY não configurada');
