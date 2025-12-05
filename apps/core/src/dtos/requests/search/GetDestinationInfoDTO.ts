@@ -30,8 +30,7 @@ export const GetDestinationInfoDTOSchema = z
       .string()
       .min(2, 'Nome da origem deve ter pelo menos 2 caracteres')
       .max(100, 'Nome da origem muito longo')
-      .trim()
-      .optional(),
+      .trim(),
 
     originCoordinates: CoordinatesSchema.optional(),
 
@@ -51,10 +50,7 @@ export const GetDestinationInfoDTOSchema = z
 
     ipAddress: z.union([ipv4(), ipv6()]).optional(),
 
-    userAgent: z
-      .string()
-      .max(500, 'User agent muito longo')
-      .optional(),
+    userAgent: z.string().max(500, 'User agent muito longo').optional(),
 
     incluedSummary: z.boolean().optional(),
     incluedSearch: z.boolean().optional(),
