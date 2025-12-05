@@ -5,7 +5,7 @@ import { ICacheRepository } from '../../interfaces';
 import { BaseUseCase } from '../shared';
 
 export interface GetCachedResponseInput {
-  cityId: string | CityId
+  cityId: string | CityId;
 }
 
 export interface GetCachedResponseOutput {
@@ -57,8 +57,8 @@ export class GetCachedResponseUseCase extends BaseUseCase<
       createdAt: entity.createdAt,
       expiresAt: entity.expiresAt,
       hitCount: entity.hitCount,
-      isExpired: entity.isExpired,
-      getRemainingTTL: entity.getRemainingTTL,
+      isExpired: () => entity.isExpired(),
+      getRemainingTTL: () => entity.getRemainingTTL(),
     });
   }
 }
