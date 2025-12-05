@@ -37,3 +37,26 @@ export function validateLLMConfig(): void {
     throw new Error('[LLMConfig] presencePenalty deve estar entre 0 e 2');
   }
 }
+
+export const PromptConfigs = {
+  travelGuide: {
+    temperature: 0.9,
+    maxTokens: 1000,
+    frequencyPenalty: 0.5,
+    presencePenalty: 0.5,
+  },
+
+  shortSummary: {
+    temperature: 0.4,
+    maxTokens: 300,
+    frequencyPenalty: 0.3,
+    presencePenalty: 0.3,
+  },
+
+  detailedGuide: {
+    temperature: 0.8,
+    maxTokens: 2000,
+    frequencyPenalty: 0.6,
+    presencePenalty: 0.6,
+  },
+} as const;
