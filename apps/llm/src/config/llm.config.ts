@@ -11,3 +11,29 @@ export const LLMConfig = {
   retryDelay: parseInt(process.env.LLM_RETRY_DELAY || '1000', 10),
   defaultLanguage: 'pt-BR',
 };
+
+export function validateLLMConfig(): void {
+  if (!LLMConfig.apiKey) {
+    throw new Error('[LLMConfig] API KEY não configurada');
+  }
+
+  if (LLMConfig.temperature < 0 || LLMConfig.temperature > 2) {
+    throw new Error('[LLMConfig] Temperature deve estar entre 0 e 2');
+  }
+
+  if (LLMConfig.maxTokens < 1) {
+    throw new Error('[LLMConfig] maxTokens deve ser maior que 0');
+  }
+
+  if (LLMConfig.topP < 0 || LLMConfig.topP > 1) {
+    throw new Error('[LLMConfig] topP deve estar entre 0 e 1');
+  }
+
+  if (LLMConfig.frequencyPenalty < 0 || LLMConfig.frequencyPenalty > 2) {
+    throw new Error('[LLMConfig] frequencyPenalty deve estar entre 0 e 2');
+  }
+
+  if (LLMConfig.presencePenalty < 0 || LLMConfig.presencePenalty > 2) {
+    throw new Error('[LLMConfig] presencePenalty deve estar entre 0 e 2');
+  }
+}
