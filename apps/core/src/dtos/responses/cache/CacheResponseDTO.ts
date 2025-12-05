@@ -1,26 +1,81 @@
 import { z } from 'zod';
 
-const WeatherInfoDTOSchema = z.object({
+const ForecastInfoDTOSchema = z.object({
+  date: z.iso.datetime().optional(),
   temperature: z.number().optional(),
+  temperatureMin: z.number().optional(),
+  temperatureMax: z.number().optional(),
   condition: z.string().optional(),
   humidity: z.number().optional(),
   description: z.string().optional(),
+  chanceOfRain: z.number().optional(),
 });
 
-const TransportCostsDTOSchema = z.object({
-  busMin: z.number().optional(),
-  busMax: z.number().optional(),
-  flightMin: z.number().optional(),
-  flightMax: z.number().optional(),
+const SeasonalInfoDTOSchema = z.object({
+  season: z.enum(['summer', 'autumn', 'winter', 'spring']),
+  averageTemperature: z.number(),
+  averageRainfall: z.number(),
+  description: z.string(),
 });
 
-export const AccommodationCostsDTOSchema = z.object({
-  budgetMin: z.number().optional(),
-  budgetMax: z.number().optional(),
-  midRangeMin: z.number().optional(),
-  midRangeMax: z.number().optional(),
-  luxuryMin: z.number().optional(),
-  luxuryMax: z.number().optional(),
+const WeatherInfoDTOSchema = z.object({
+  current: z
+    .object({
+      temperature: z.number().optional(),
+      temperatureMin: z.number().optional(),
+      temperatureMax: z.number().optional(),
+      feelsLike: z.number().optional(),
+      condition: z.string().optional(),
+      humidity: z.number().optional(),
+      description: z.string().optional(),
+      windSpeed: z.number().optional(),
+      pressure: z.number().optional(),
+      cloudiness: z.number().optional(),
+      visibility: z.number().optional(),
+    })
+    .optional(),
+  forecast: z.array(ForecastInfoDTOSchema).optional(),
+  seasonal: SeasonalInfoDTOSchema.optional(),
+});
+
+const CostsTotalDTOSchema = z.object({
+  transport: z
+    .object({
+      busMin: z.number().optional(),
+      busMax: z.number().optional(),
+      flightMin: z.number().optional(),
+      flightMax: z.number().optional(),
+    })
+    .optional(),
+  accommodation: z
+    .object({
+      budgetMin: z.number().optional(),
+      budgetMax: z.number().optional(),
+      midRangeMin: z.number().optional(),
+      midRangeMax: z.number().optional(),
+      luxuryMin: z.number().optional(),
+      luxuryMax: z.number().optional(),
+    })
+    .optional(),
+  estimateDailyBudget: z
+    .object({
+      budget: z.number().optional(),
+      midRange: z.number().optional(),
+      luxury: z.number().optional(),
+    })
+    .optional(),
+  totalEstimate: z
+    .object({
+      min: z.number().optional(),
+      max: z.number().optional(),
+    })
+    .optional(),
+  costsSources: z
+    .object({
+      transport: z.enum(['api', 'estimated']),
+      accommodation: z.enum(['api', 'estimated']),
+    })
+    .optional(),
 });
 
 export const CachedResponseDTOSchema = z.object({
@@ -28,8 +83,7 @@ export const CachedResponseDTOSchema = z.object({
   responseData: z.object({
     cityInfo: z.string(),
     weatherInfo: WeatherInfoDTOSchema.optional(),
-    transportCosts: TransportCostsDTOSchema.optional(),
-    accommodationCosts: AccommodationCostsDTOSchema.optional(),
+    costsTotal: CostsTotalDTOSchema.optional(),
     generatedText: z.string().optional(),
   }),
   createdAt: z.iso.datetime(),
@@ -40,29 +94,70 @@ export const CachedResponseDTOSchema = z.object({
 });
 
 export type CachedResponseDTO = z.infer<typeof CachedResponseDTOSchema>;
+
 export function mapCachedResponseToDTO(entity: {
   cityId: { toString(): string };
   responseData: {
     cityInfo: string;
     weatherInfo?: {
-      temperature?: number;
-      condition?: string;
-      humidity?: number;
-      description?: string;
+      current?: {
+        temperature?: number;
+        temperatureMin?: number;
+        temperatureMax?: number;
+        feelsLike?: number;
+        condition?: string;
+        humidity?: number;
+        description?: string;
+        windSpeed?: number;
+        pressure?: number;
+        cloudiness?: number;
+        visibility?: number;
+      };
+      forecast?: Array<{
+        date: Date;
+        temperature?: number;
+        temperatureMin?: number;
+        temperatureMax?: number;
+        condition?: string;
+        humidity?: number;
+        description?: string;
+        chanceOfRain?: number;
+      }>;
+      seasonal?: {
+        season: 'summer' | 'autumn' | 'winter' | 'spring';
+        averageTemperature: number;
+        averageRainfall: number;
+        description: string;
+      };
     };
-    transportCosts?: {
-      busMin?: number;
-      busMax?: number;
-      flightMin?: number;
-      flightMax?: number;
-    };
-    accommodationCosts?: {
-      budgetMin?: number;
-      budgetMax?: number;
-      midRangeMin?: number;
-      midRangeMax?: number;
-      luxuryMin?: number;
-      luxuryMax?: number;
+    costsTotal?: {
+      transport?: {
+        busMin?: number;
+        busMax?: number;
+        flightMin?: number;
+        flightMax?: number;
+      };
+      accommodation?: {
+        budgetMin?: number;
+        budgetMax?: number;
+        midRangeMin?: number;
+        midRangeMax?: number;
+        luxuryMin?: number;
+        luxuryMax?: number;
+      };
+      estimateDailyBudget?: {
+        budget?: number;
+        midRange?: number;
+        luxury?: number;
+      };
+      totalEstimate?: {
+        min?: number;
+        max?: number;
+      };
+      costsSources?: {
+        transport: 'api' | 'estimated';
+        accommodation: 'api' | 'estimated';
+      };
     };
     generatedText?: string;
   };
@@ -78,30 +173,15 @@ export function mapCachedResponseToDTO(entity: {
       cityInfo: entity.responseData.cityInfo,
       weatherInfo: entity.responseData.weatherInfo
         ? {
-            temperature: entity.responseData.weatherInfo.temperature,
-            condition: entity.responseData.weatherInfo.condition,
-            humidity: entity.responseData.weatherInfo.humidity,
-            description: entity.responseData.weatherInfo.description,
+            current: entity.responseData.weatherInfo.current,
+            forecast: entity.responseData.weatherInfo.forecast?.map((f) => ({
+              ...f,
+              date: f.date.toISOString(),
+            })),
+            seasonal: entity.responseData.weatherInfo.seasonal,
           }
         : undefined,
-      transportCosts: entity.responseData.transportCosts
-        ? {
-            busMin: entity.responseData.transportCosts.busMin,
-            busMax: entity.responseData.transportCosts.busMax,
-            flightMin: entity.responseData.transportCosts.flightMin,
-            flightMax: entity.responseData.transportCosts.flightMax,
-          }
-        : undefined,
-      accommodationCosts: entity.responseData.accommodationCosts
-        ? {
-            budgetMin: entity.responseData.accommodationCosts.budgetMin,
-            budgetMax: entity.responseData.accommodationCosts.budgetMax,
-            midRangeMin: entity.responseData.accommodationCosts.midRangeMin,
-            midRangeMax: entity.responseData.accommodationCosts.midRangeMax,
-            luxuryMin: entity.responseData.accommodationCosts.luxuryMin,
-            luxuryMax: entity.responseData.accommodationCosts.luxuryMax,
-          }
-        : undefined,
+      costsTotal: entity.responseData.costsTotal,
       generatedText: entity.responseData.generatedText,
     },
     createdAt: entity.createdAt.toISOString(),
