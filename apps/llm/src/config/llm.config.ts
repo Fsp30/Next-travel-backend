@@ -60,3 +60,10 @@ export const PromptConfigs = {
     presencePenalty: 0.6,
   },
 } as const;
+
+export const ModelCosts = {
+  'gpt-3.5-turbo': {
+    input: 0.0015,
+    output: 0.002,
+  },
+};
