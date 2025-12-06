@@ -28,7 +28,7 @@ export class OpenAILLMService implements ILLMService {
 
       const response = await this.client.chat.completions.create({
         model: LLMConfig.model,
-        messages: messages as any,
+        messages: messages,
         temperature: LLMConfig.temperature,
         max_tokens: LLMConfig.maxTokens,
         top_p: LLMConfig.topP,
