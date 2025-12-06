@@ -3,11 +3,9 @@ import {
   generateSystemPrompt,
   generateUserPrompt,
 } from './guide-generator.propmt';
+import { OpenAI } from 'openai';
 
-export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
+export type ChatMessage = OpenAI.Chat.ChatCompletionMessageParam;
 
 export class PrompBuilder {
   private messages: ChatMessage[] = [];
