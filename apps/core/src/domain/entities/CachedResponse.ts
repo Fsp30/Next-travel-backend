@@ -1,10 +1,73 @@
 import { CityId } from '../value-objects/CityId';
 
-export interface WeatherInfo {
+interface ForecastInfo {
+  date: Date;
   temperature?: number;
+  temperatureMin?: number;
+  temperatureMax?: number;
   condition?: string;
   humidity?: number;
   description?: string;
+  chanceOfRain?: number;
+}
+
+export enum season {
+  summer = 'summer',
+  autumn = 'autumn',
+  winter = 'winter',
+  spring = 'spring',
+}
+export enum transportEnum {
+  api = 'api',
+  estimated = 'estimated',
+}
+
+export enum accommodationEnum {
+  api = 'api',
+  estimated = 'estimated',
+}
+
+export interface WeatherInfo {
+  current:
+    | {
+        temperature?: number;
+        temperatureMin?: number;
+        temperatureMax?: number;
+        feelsLike?: number;
+        condition?: string;
+        humidity?: number;
+        description?: string;
+        windSpeed?: number;
+        pressure?: number;
+        cloudiness?: number;
+        visibility?: number;
+      }
+    | undefined;
+  forecast?: ForecastInfo[];
+  seasonal?: {
+    season: season;
+    averageTemperature: number;
+    averageRainfall: number;
+    description: string;
+  };
+}
+
+export interface CostsTotal {
+  transport?: TransportCosts;
+  accommodation?: AccommodationCosts;
+  estimateDailyBugdet?: {
+    bugdet?: number;
+    midRange?: number;
+    luxury?: number;
+  };
+  totalEstimate?: {
+    min?: number;
+    max?: number;
+  };
+  costsSources: {
+    transport: transportEnum;
+    accommodation: accommodationEnum;
+  };
 }
 
 export interface TransportCosts {
@@ -26,8 +89,7 @@ export interface AccommodationCosts {
 export interface CachedResponseData {
   cityInfo: string;
   weatherInfo?: WeatherInfo;
-  transportCosts?: TransportCosts;
-  accommodationCosts?: AccommodationCosts;
+  costsTotal?: CostsTotal;
   generatedText?: string;
 }
 
