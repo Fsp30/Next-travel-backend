@@ -28,6 +28,7 @@ const WeatherInfoDTOSchema = z.object({
       condition: z.string().optional(),
       humidity: z.number().optional(),
       description: z.string().optional(),
+      generatedAt: z.iso.datetime().optional(),
       windSpeed: z.number().optional(),
       pressure: z.number().optional(),
       cloudiness: z.number().optional(),
@@ -78,6 +79,19 @@ const CostsTotalDTOSchema = z.object({
     .optional(),
 });
 
+const HotelInfoSchema = z.object({
+  hotelId: z.string(),
+  name: z.string(),
+  cityCode: z.string().optional(),
+  rating: z.string().optional(),
+  geoCode: z
+    .object({
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
+    })
+    .optional(),
+});
+
 export const CachedResponseDTOSchema = z.object({
   cityId: z.uuidv4(),
   responseData: z.object({
@@ -85,6 +99,8 @@ export const CachedResponseDTOSchema = z.object({
     weatherInfo: WeatherInfoDTOSchema.optional(),
     costsTotal: CostsTotalDTOSchema.optional(),
     generatedText: z.string().optional(),
+    generatedAt: z.iso.datetime().optional(),
+    hotels: z.array(HotelInfoSchema).optional(),
   }),
   createdAt: z.iso.datetime(),
   expiresAt: z.iso.datetime(),
@@ -108,6 +124,7 @@ export function mapCachedResponseToDTO(entity: {
         condition?: string;
         humidity?: number;
         description?: string;
+        generatedAt?: Date;
         windSpeed?: number;
         pressure?: number;
         cloudiness?: number;
@@ -160,6 +177,17 @@ export function mapCachedResponseToDTO(entity: {
       };
     };
     generatedText?: string;
+    generatedAt?: Date;
+    hotels?: Array<{
+      hotelId: string;
+      name: string;
+      cityCode?: string;
+      rating?: string;
+      geoCode?: {
+        latitude?: number;
+        longitude?: number;
+      };
+    }>;
   };
   createdAt: Date;
   expiresAt: Date;
@@ -173,7 +201,13 @@ export function mapCachedResponseToDTO(entity: {
       cityInfo: entity.responseData.cityInfo,
       weatherInfo: entity.responseData.weatherInfo
         ? {
-            current: entity.responseData.weatherInfo.current,
+            current: entity.responseData.weatherInfo.current
+              ? {
+                  ...entity.responseData.weatherInfo.current,
+                  generatedAt:
+                    entity.responseData.weatherInfo.current.generatedAt?.toISOString(),
+                }
+              : undefined,
             forecast: entity.responseData.weatherInfo.forecast?.map((f) => ({
               ...f,
               date: f.date.toISOString(),
@@ -183,6 +217,8 @@ export function mapCachedResponseToDTO(entity: {
         : undefined,
       costsTotal: entity.responseData.costsTotal,
       generatedText: entity.responseData.generatedText,
+      generatedAt: entity.responseData.generatedAt?.toISOString(), // ⬅️ Adicionado
+      hotels: entity.responseData.hotels, // ⬅️ Adicionado
     },
     createdAt: entity.createdAt.toISOString(),
     expiresAt: entity.expiresAt.toISOString(),
