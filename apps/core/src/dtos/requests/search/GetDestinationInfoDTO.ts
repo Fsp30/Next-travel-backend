@@ -52,8 +52,17 @@ export const GetDestinationInfoDTOSchema = z
 
     userAgent: z.string().max(500, 'User agent muito longo').optional(),
 
+    forecastDays: z
+      .number()
+      .max(7, 'O número de dias previstos não pode exceder 7')
+      .min(1, 'Minino de um dia de previsão')
+      .optional(),
+    targetMonth: z.number().max(12).min(1),
+
     incluedSummary: z.boolean().optional(),
     incluedSearch: z.boolean().optional(),
+    includeForecast: z.boolean().optional(),
+    includeSeasonal: z.boolean().optional(),
   })
   .refine(
     (data) => {
@@ -121,6 +130,19 @@ export const GetDestinationInfoDTOSchema = z
     {
       message: 'Coordenadas da origem fornecidas sem o nome da origem',
       path: ['origin'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.targetMonth < 1 || data.targetMonth > 12) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message:
+        'O correspondete mensal deve estar entre 1 (janeiro) e 12 (dezembro)',
+      path: ['targetMonth'],
     }
   );
 
