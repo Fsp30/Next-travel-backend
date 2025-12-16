@@ -1,15 +1,10 @@
+import {
+  SeasonalWeatherDTO,
+  WeatherCurrentDataDTO,
+  WeatherForecastDTO,
+} from '../../dtos';
+import { HotelInfo } from '../../infrastructure/external-services/costs-service/accommodation-service/interface/IHotels.interface';
 import { CityId } from '../value-objects/CityId';
-
-interface ForecastInfo {
-  date: Date;
-  temperature?: number;
-  temperatureMin?: number;
-  temperatureMax?: number;
-  condition?: string;
-  humidity?: number;
-  description?: string;
-  chanceOfRain?: number;
-}
 
 export enum season {
   summer = 'summer',
@@ -26,36 +21,21 @@ export enum accommodationEnum {
   api = 'api',
   estimated = 'estimated',
 }
-
 export interface WeatherInfo {
-  current:
-    | {
-        temperature?: number;
-        temperatureMin?: number;
-        temperatureMax?: number;
-        feelsLike?: number;
-        condition?: string;
-        humidity?: number;
-        description?: string;
-        windSpeed?: number;
-        pressure?: number;
-        cloudiness?: number;
-        visibility?: number;
-      }
-    | undefined;
-  forecast?: ForecastInfo[];
-  seasonal?: {
-    season: season;
-    averageTemperature: number;
-    averageRainfall: number;
-    description: string;
-  };
+  current?: WeatherCurrentDataDTO;
+  forecast?: WeatherForecastDTO[];
+  seasonal?: SeasonalWeatherDTO;
+}
+
+export interface CostsSource {
+  transport: transportEnum;
+  accommodation: accommodationEnum;
 }
 
 export interface CostsTotal {
   transport?: TransportCosts;
   accommodation?: AccommodationCosts;
-  estimateDailyBugdet?: {
+  estimateDailyBudget?: {
     bugdet?: number;
     midRange?: number;
     luxury?: number;
@@ -64,10 +44,7 @@ export interface CostsTotal {
     min?: number;
     max?: number;
   };
-  costsSources: {
-    transport: transportEnum;
-    accommodation: accommodationEnum;
-  };
+  costsSources: CostsSource;
 }
 
 export interface TransportCosts {
@@ -91,6 +68,8 @@ export interface CachedResponseData {
   weatherInfo?: WeatherInfo;
   costsTotal?: CostsTotal;
   generatedText?: string;
+  generatedAt?: Date;
+  hotels?: HotelInfo[];
 }
 
 export interface CachedResponseProps {
