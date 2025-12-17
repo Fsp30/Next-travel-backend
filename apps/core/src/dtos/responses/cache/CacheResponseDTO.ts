@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { HotelInfoSchema } from '../destination/costs';
 
 const ForecastInfoDTOSchema = z.object({
   date: z.iso.datetime().optional(),
@@ -75,19 +76,6 @@ const CostsTotalDTOSchema = z.object({
     .object({
       transport: z.enum(['api', 'estimated']),
       accommodation: z.enum(['api', 'estimated']),
-    })
-    .optional(),
-});
-
-const HotelInfoSchema = z.object({
-  hotelId: z.string(),
-  name: z.string(),
-  cityCode: z.string().optional(),
-  rating: z.string().optional(),
-  geoCode: z
-    .object({
-      latitude: z.number().optional(),
-      longitude: z.number().optional(),
     })
     .optional(),
 });
