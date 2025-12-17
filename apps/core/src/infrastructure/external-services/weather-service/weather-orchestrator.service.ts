@@ -86,7 +86,7 @@ export class WeatherOrchestratorService extends BaseService<
   }
 
   private validateInput(input: WeatherOrchestratorInput): void {
-    if (!input.coordinates || !input.cityName) {
+    if (!input.coordinates && !input.cityName) {
       throw new Error('Nome da cidade ou Coordenadas obrigatórias.');
     }
     if (input.cityName && input.cityName.trim().length <= 2) {
