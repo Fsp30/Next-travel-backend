@@ -21,7 +21,7 @@ export class SaveCachedResponseUseCase extends BaseUseCase<
   SaveCachedResponseInput,
   SaveCachedResponseOutput
 > {
-  private readonly DEFAULT_TTL_DAYS = 30;
+  private readonly DEFAULT_TTL_DAYS = 3;
   constructor(private readonly cacheRepository: ICacheRepository) {
     super();
   }
@@ -43,7 +43,7 @@ export class SaveCachedResponseUseCase extends BaseUseCase<
       ttlInDays
     );
 
-    const ttlInSeconds = cachedResponse.getRemainingTTL();
+    const ttlInSeconds = cachedResponse.getTTLInSeconds();
 
     await this.cacheRepository.set(cityId, cachedResponse, ttlInSeconds);
 
