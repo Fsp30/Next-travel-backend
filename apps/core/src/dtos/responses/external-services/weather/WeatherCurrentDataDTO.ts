@@ -1,4 +1,4 @@
-import z from 'zod';
+import { z } from 'zod';
 
 export const WeatherDataSchema = z.object({
   temperature: z.number(),
@@ -12,7 +12,7 @@ export const WeatherDataSchema = z.object({
   pressure: z.number(),
   cloudiness: z.number().optional(),
   visibility: z.number().optional(),
-  timestamp: z.date(),
+  timestamp: z.coerce.date(),
 });
 
 export type WeatherCurrentDataDTO = z.infer<typeof WeatherDataSchema>;
