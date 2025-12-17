@@ -1,19 +1,58 @@
-import { Coordinates } from "../../domain/value-objects";
-import { CityResponseDTO, CostEstimateDTO, DestinationInfoResponseDTO, GetDestinationInfoDTO, validateGetDestinationInfoDTO } from "../../dtos";
-import { CostsOrchestratorService, CostsServiceInput, CostsServiceOutput, WeatherOrchestratorOutput, WeatherOrchestratorService, WikipediaOrchestratorInput, WikipediaOrchestratorOutput, WikipediaOrchestratorService } from "../../infrastructure";
-import { GetCachedResponseInput, GetCachedResponseOutput, GetCachedResponseUseCase, SaveCachedResponseUseCase } from "../cache";
-import { CreateCityInput, CreateCityOutput, CreateCityUseCase, GetCityBySlugOrCityIdUseCase, GetCityInput, GetCityOutput, UpdateCityPopularityInput, UpdateCityPopularityOutput, UpdateCityPopularityUseCase } from "../city";
-import { BaseUseCase } from "../shared";
-import { generateSlug, isValidSlug } from "../shared/slug-generator";
-import { CreateSearchHistoryUseCase } from "./create-search-history.use-case";
-import { WeatherOrchestratorInput } from '../../infrastructure/external-services/weather-service/weather-orchestrator.service';
-import { CachedResponseData, season, currecy, accommodationEnum, transportEnum, WeatherInfo } from '../../domain/entities/CachedResponse';
+import { BaseUseCase } from '../shared';
+import { generateSlug, isValidSlug } from '../shared/slug-generator';
 
+import {
+  accommodationEnum,
+  CachedResponseData,
+  CostsSource,
+  season,
+  transportEnum,
+  WeatherInfo,
+} from '../../domain/entities/CachedResponse';
+import { Coordinates } from '../../domain/value-objects';
 
-export type SearchDestinationInput = GetDestinationInfoDTO
-export type SearchDestinationOutput = DestinationInfoResponseDTO
+import {
+  CityResponseDTO,
+  DestinationInfoResponseDTO,
+  GetDestinationInfoDTO,
+  validateGetDestinationInfoDTO,
+} from '../../dtos';
 
-interface SearchDestinationDeps {
+import {
+  CostsOrchestratorService,
+  CostsServiceInput,
+  CostsServiceOutput,
+  WeatherOrchestratorInput,
+  WeatherOrchestratorOutput,
+  WeatherOrchestratorService,
+  WikipediaOrchestratorInput,
+  WikipediaOrchestratorOutput,
+  WikipediaOrchestratorService,
+} from '../../infrastructure';
+import {
+  GetCachedResponseOutput,
+  GetCachedResponseUseCase,
+  SaveCachedResponseUseCase,
+} from '../cache';
+import {
+  CreateCityUseCase,
+  GetCityBySlugOrCityIdUseCase,
+  UpdateCityPopularityOutput,
+  UpdateCityPopularityUseCase,
+} from '../city';
+
+import {
+  CreateSearchHistoryInput,
+  CreateSearchHistoryUseCase,
+} from './create-search-history.use-case';
+
+import { GenerateTravelGuideInput, ILLMService } from '../../../../llm/src';
+import { CachedResponseRaw, IFetchedCityData } from '../helperInterfaces';
+
+export type Input = GetDestinationInfoDTO;
+export type Output = DestinationInfoResponseDTO;
+
+interface SearchDestinationDependecies {
   getCityUseCase: GetCityBySlugOrCityIdUseCase;
   createCityUseCase: CreateCityUseCase;
   updateCityPopularityUseCase: UpdateCityPopularityUseCase;
@@ -24,421 +63,940 @@ interface SearchDestinationDeps {
   wikipediaOrchestrator: WikipediaOrchestratorService;
   weatherOrchestrator: WeatherOrchestratorService;
   costsOrchestrator: CostsOrchestratorService;
+
+  llmService: ILLMService;
 }
 
-export class SearchDestinationUseCase extends BaseUseCase<
-  SearchDestinationInput, SearchDestinationOutput
-> {
-  private readonly POPULAR_CITY_THRESHOLD = 100;
-  private readonly CACHE_TTL_DAYS = 15;
+export class SearchDestinationUseCase extends BaseUseCase<Input, Output> {
+  private readonly POPULAR_CITY_THRESHOLD = 10;
+  private readonly CACHE_TTL_DAYS = 3;
 
-  constructor(private readonly deps: SearchDestinationDeps) {
+  constructor(private readonly deps: SearchDestinationDependecies) {
     super();
   }
 
-  async execute(input: SearchDestinationInput): Promise<SearchDestinationOutput> {
-    const request = validateGetDestinationInfoDTO(input)
-    request.
+  async execute(input: Input): Promise<Output> {
+    const request = validateGetDestinationInfoDTO(input);
 
+    console.log(
+      `[SearchDestination] 🔍 Iniciando busca: ${request.cityName}, ${request.state}`
+    );
 
-    const slugGenerated = generateSlug(request.cityName, request.state)
+    const slug = generateSlug(request.cityName, request.state);
+    const city = await this.getOrCreateCity(
+      slug,
+      request.cityName,
+      request.state
+    );
 
-    const city = await this.getOrCreateCity(slugGenerated, request.cityName, request.state)
+    console.log(
+      `[SearchDestination] 📍 Cidade encontrada: ${city.name} (ID: ${city.id})`
+    );
 
-    this.validateId(city.id)
+    this.updateCityPopularityAsync(city.id);
 
-    const cachedResponseCity = await this.getCacheResponse(city.id)
+    const cachedResponse = await this.getCachedData(city.id);
 
-    if (!cachedResponseCity.cachedResponse) {
+    if (cachedResponse && cachedResponse.cachedResponse) {
+      console.log(
+        `[SearchDestination] ✅ Cache HIT para ${city.name} - Retornando dados cacheados`
+      );
 
+      if (request.userId) {
+        this.createSearchHistoryAsync(
+          request.userId,
+          city.id,
+          city.name,
+          city.state,
+          request.startDate,
+          request.endDate
+        );
+      }
+      const responseData = this.normalizeCachedData(
+        cachedResponse.cachedResponse.responseData
+      );
+      return this.buildClientResponse(city, responseData, true);
+    }
+
+    console.log(
+      `[SearchDestination] ❌ Cache MISS - Buscando dados nas APIs...`
+    );
+
+    const fetchedData = await this.fetchAllCityData({
+      city,
+      startDate: request.startDate,
+      endDate: request.endDate,
+      forecastDays: request.forecastDays ?? 5,
+      targetMonth: request.targetMonth,
+      includeForecast: request.includeForecast ?? true,
+      includeSeasonal: request.includeSeasonal ?? false,
+      origin: request.origin,
+    });
+    const start = request.startDate || new Date();
+    const end =
+      request.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    const guideText = await this.generateGuideTextWithLLM({
+      cityName: city.name,
+      state: city.state,
+      country: 'Brasil',
+      cityInfo:
+        fetchedData.wikipediaResponse?.pageInfo?.extract ||
+        fetchedData.wikipediaResponse?.summary?.extract ||
+        `Informações sobre a cidade: ${city.name}`,
+
+      weather: fetchedData.weatherResponse
+        ? {
+            current: fetchedData.weatherResponse.current
+              ? {
+                  temperature: fetchedData.weatherResponse.current.temperature,
+                  condition: fetchedData.weatherResponse.current.condition,
+                  description: fetchedData.weatherResponse.current.description,
+                  humidity: fetchedData.weatherResponse.current.humidity,
+                }
+              : undefined,
+            forecast: fetchedData.weatherResponse.forecast?.map((f) => ({
+              date: f.date,
+              temperature: f.temperature,
+              condition: f.condition,
+            })),
+            seasonal: fetchedData.weatherResponse.seasonal
+              ? {
+                  season: fetchedData.weatherResponse.seasonal.season,
+                  averageTemperature:
+                    fetchedData.weatherResponse.seasonal.averageTemperature,
+                  description: fetchedData.weatherResponse.seasonal.description,
+                }
+              : undefined,
+          }
+        : undefined,
+
+      costs: fetchedData.costsResponse
+        ? {
+            transport: {
+              bus: fetchedData.costsResponse.data.transport?.bus,
+              flight: fetchedData.costsResponse.data.transport?.flight,
+            },
+            accommodation: {
+              budget: fetchedData.costsResponse.data.accommodation?.budget,
+              midRange: fetchedData.costsResponse.data.accommodation?.midRange,
+              luxury: fetchedData.costsResponse.data.accommodation?.luxury,
+            },
+            currency: 'BRL',
+          }
+        : undefined,
+
+      travelInfo: {
+        startDate: start,
+        endDate: end,
+        origin: request.origin,
+        numberOfNights: this.calculateNights(start, end),
+      },
+    });
+
+    const cacheData = await this.buildCacheData(
+      city.name,
+      fetchedData,
+      guideText
+    );
+
+    const shouldCache =
+      city.requestCount >= this.POPULAR_CITY_THRESHOLD || city.isPopular;
+
+    if (shouldCache) {
+      console.log(
+        `[SearchDestination] 🔥 Cidade popular (${city.requestCount} requests) - Salvando em cache...`
+      );
+
+      this.saveToCacheAsync(city.id, cacheData);
+    } else {
+      console.log(
+        `[SearchDestination] ⚠️ Cidade não popular (${city.requestCount} requests) - Cache não salvo`
+      );
+    }
+
+    if (request.userId) {
+      this.createSearchHistoryAsync(
+        request.userId,
+        city.id,
+        city.name,
+        city.state,
+        request.startDate,
+        request.endDate
+      );
+    }
+
+    console.log(
+      `[SearchDestination] ✅ Processamento concluído para ${city.name}`
+    );
+
+    return this.buildClientResponse(city, cacheData, false);
+  }
+
+  //Metodos
+  private async getOrCreateCity(
+    slug: string,
+    cityName: string,
+    state: string
+  ): Promise<CityResponseDTO> {
+    try {
+      if (!isValidSlug(slug)) {
+        throw new Error(`Slug inválido: ${slug}`);
+      }
+      const result = await this.deps.getCityUseCase.execute({ slug });
+      return result.city;
+    } catch (_) {
+      console.log(
+        `[SearchDestination] Cidade "${cityName}" não encontrada. Criando...`
+      );
+
+      const newCity = await this.deps.createCityUseCase.execute({
+        name: cityName,
+        state,
+        country: 'Brasil',
+      });
+
+      return newCity.city;
+    }
+  }
+  private updateCityPopularityAsync(
+    cityId: string
+  ): Promise<UpdateCityPopularityOutput | null> {
+    return this.deps.updateCityPopularityUseCase
+      .execute({
+        cityId,
+      })
+      .then((result) => {
+        console.log(`Popularidade da cidade ${cityId} atualizada com sucesso!`);
+        return result;
+      })
+      .catch((error) => {
+        console.error(
+          `[SearchDestination] Erro ao atualizar popularidade da cidade ${cityId}: `,
+          error
+        );
+        return null;
+      });
+  }
+
+  //cached
+  private async getCachedData(
+    cityId: string
+  ): Promise<GetCachedResponseOutput | null> {
+    try {
+      const result = await this.deps.getCachedResponseUseCase.execute({
+        cityId,
+      });
+
+      if (!result.cachedResponse || result.isExpired) {
+        return null;
+      }
+
+      return result;
+    } catch (error) {
+      console.warn('[SearchDestination] Erro ao buscar cache:', error);
+      return null;
     }
   }
 
-  private buildDestinationInfo(params: {
+  private saveToCacheAsync(cityId: string, data: CachedResponseData): void {
+    this.deps.saveCachedResponseUseCase
+      .execute({
+        cityId,
+        responseData: data,
+        ttlInDays: this.CACHE_TTL_DAYS,
+      })
+      .then((result) => {
+        console.log(
+          `[SearchDestination] ✅ Cache salvo com sucesso (expira em: ${result.expiresAt})`
+        );
+      })
+      .catch((error) => {
+        console.error('[SearchDestination] ❌ Erro ao salvar cache:', error);
+      });
+  }
+
+  private normalizeCachedData(
+    cachedData: CachedResponseRaw
+  ): CachedResponseData {
+    return {
+      cityInfo: cachedData.cityInfo || '',
+      generatedText: cachedData.generatedText,
+      generatedAt: cachedData.generatedAt
+        ? new Date(cachedData.generatedAt)
+        : new Date(),
+      hotels: cachedData.hotels || [],
+
+      weatherInfo: cachedData.weatherInfo
+        ? {
+            current: cachedData.weatherInfo.current
+              ? {
+                  temperature: cachedData.weatherInfo.current.temperature ?? 0,
+                  temperatureMin: cachedData.weatherInfo.current.temperatureMin,
+                  temperatureMax: cachedData.weatherInfo.current.temperatureMax,
+                  feelsLike: cachedData.weatherInfo.current.feelsLike,
+                  condition:
+                    cachedData.weatherInfo.current.condition ?? 'Unknown',
+                  description: cachedData.weatherInfo.current.description ?? '',
+                  humidity: cachedData.weatherInfo.current.humidity ?? 0,
+                  windSpeed: cachedData.weatherInfo.current.windSpeed ?? 0,
+                  pressure: cachedData.weatherInfo.current.pressure ?? 0,
+                  cloudiness: cachedData.weatherInfo.current.cloudiness,
+                  visibility: cachedData.weatherInfo.current.visibility,
+                  timestamp: cachedData.weatherInfo.current.timestamp
+                    ? new Date(cachedData.weatherInfo.current.timestamp)
+                    : new Date(),
+                }
+              : undefined,
+
+            forecast: cachedData.weatherInfo.forecast
+              ?.filter((f) => f.date !== undefined && f.date !== null)
+              .map((f) => ({
+                date: new Date(f.date!),
+                temperature: f.temperature ?? 0,
+                temperatureMin: f.temperatureMin ?? 0,
+                temperatureMax: f.temperatureMax ?? 0,
+                condition: f.condition ?? 'Unknown',
+                description: f.description ?? '',
+                humidity: f.humidity ?? 0,
+                chanceOfRain: f.chanceOfRain,
+              })),
+
+            seasonal: cachedData.weatherInfo.seasonal
+              ? {
+                  season: this.validateSeason(
+                    cachedData.weatherInfo.seasonal.season
+                  ),
+                  averageTemperature:
+                    cachedData.weatherInfo.seasonal.averageTemperature,
+                  averageRainfall:
+                    cachedData.weatherInfo.seasonal.averageRainfall ?? 0,
+                  description:
+                    cachedData.weatherInfo.seasonal.description ?? '',
+                }
+              : undefined,
+          }
+        : undefined,
+
+      costsTotal: cachedData.costsTotal
+        ? {
+            accommodation: cachedData.costsTotal.accommodation,
+            transport: cachedData.costsTotal.transport,
+            estimateDailyBudget: cachedData.costsTotal.estimateDailyBudget,
+            totalEstimate: cachedData.costsTotal.totalEstimate,
+            costsSources: cachedData.costsTotal.costsSources as CostsSource,
+          }
+        : undefined,
+    };
+  }
+
+  //apis Fetch
+  private async fetchAllCityData(params: {
     city: CityResponseDTO;
     startDate?: Date;
     endDate?: Date;
-    forecastDays?: number;
+    forecastDays: number;
     targetMonth?: number;
-    includeForecast?: boolean;
-    includeSeasonal?: boolean;
+    includeForecast: boolean;
+    includeSeasonal: boolean;
     origin: string;
-    originCoordinates?: Coordinates;
-    cityCoordinates?: Coordinates;
-  }): Promise<CachedResponseData> {
-    
+  }): Promise<IFetchedCityData> {
+    let coordsIntance: Coordinates | undefined = undefined;
+    if (params.city.coordinates) {
+      coordsIntance = Coordinates.create(
+        params.city.coordinates.latitude,
+        params.city.coordinates.longitude
+      );
+    }
 
-    console.log('[SearchDestinationUseCase] Buscando dados em APIs')
+    const [wikipediaResult, weatherResult, costsResult] =
+      await Promise.allSettled([
+        this.fetchWikipediaInfo(
+          params.city.name,
+          params.city.state,
+          params.city.country
+        ),
+        this.fetchWeatherInfo(
+          coordsIntance,
+          params.city.name,
+          params.forecastDays,
+          params.targetMonth,
+          params.includeForecast,
+          params.includeSeasonal
+        ),
+        this.fetchCostsInfo(
+          params.origin,
+          params.city.name,
+          params.startDate,
+          params.endDate,
+          coordsIntance
+        ),
+      ]);
 
-
-    const [wikipediaResult, weatherResult, costsResult] = await Promise.allSettled([
-      this.fetchWikipediaOrchestrator(params.city.name, params.city.state, params.city.country),
-      this.fetchWeatherOrchestrator(
-        params.city.name,
-        params.cityCoordinates,
-        params.forecastDays,
-        params.targetMonth,
-        params.includeForecast,
-        params.includeSeasonal
-      ),
-      this.fetchCostsOrchestrator(
-        params.origin,
-        params.city.name,
-        params.startDate,
-        params.endDate,
-        params.originCoordinates,
-        params.cityCoordinates
-      )
-    ])
-
-    const wikipediaResponse = this.extractResult(wikipediaResult, 'WikipediaAPI')
-    const weatherResponse = this.extractResult(weatherResult, 'WeatherAPI')
-    const costsResponse = this.extractResult(costsResult, 'CostsAPI')
-
-    console.log('[SearchDestinationUseCase] Dados buscados com sucesso.')
-
-    const 
-
-
-    const data: CachedResponseData = {
-      cityInfo: wikipediaResponse?.pageInfo?.extract || wikipediaResponse?.summary?.extract || `Informações sobre ${params.city.name}`,
-
-      weatherInfo: {
-        current: weatherResponse?.current ? {
-          temperature: weatherResponse.current.temperature,
-          feelsLike: weatherResponse.current.feelsLike,
-          temperatureMax: weatherResponse.current.temperatureMax,
-          temperatureMin: weatherResponse.current.temperatureMin,
-          windSpeed: weatherResponse.current.windSpeed,
-          condition: weatherResponse.current.condition,
-          pressure: weatherResponse.current.pressure,
-          visibility: weatherResponse.current.visibility,
-          humidity: weatherResponse.current.humidity,
-          description: weatherResponse.current.description,
-          cloudiness: weatherResponse.current.cloudiness,
-        } : undefined,
-
-
-        forecast: weatherResponse?.forecast?.map(item => ({
-          date: new Date(item.date),
-          temperature: item.temperature,
-          temperatureMin: item.temperatureMin,
-          temperatureMax: item.temperatureMax,
-          condition: item.condition,
-          humidity: item.humidity,
-          description: item.description,
-          chanceOfRain: item.chanceOfRain,
-        })),
-
-
-        seasonal: weatherResponse?.seasonal ? {
-          season: weatherResponse.seasonal.season as season,
-          averageTemperature: weatherResponse.seasonal.averageTemperature,
-          averageRainfall: weatherResponse.seasonal.averageRainfall,
-          description: weatherResponse.seasonal.description,
-        } : undefined,
-      },
-      costsTotal: {
-        accommodation: {
-          budgetMin: costsResponse?.data.accommodation?.budget?.min,
-          budgetMax: costsResponse?.data.accommodation?.budget?.max,
-          luxuryMin: costsResponse?.data.accommodation?.luxury?.min,
-          luxuryMax: costsResponse?.data.accommodation?.luxury?.max,
-          midRangeMin: costsResponse?.data.accommodation?.midRange?.min,
-          midRangeMax: costsResponse?.data.accommodation?.midRange?.max
-        },
-
-        transport: {
-          busMin: costsResponse?.data.transport?.bus?.min,
-          busMax: costsResponse?.data.transport?.bus?.max,
-          flightMin: costsResponse?.data.transport?.flight?.min,
-          flightMax: costsResponse?.data.transport?.flight?.max
-        },
-        estimateDailyBugdet: {
-          bugdet: costsResponse?.data.estimateDailyBudget?.budget,
-          midRange: costsResponse?.data.estimateDailyBudget?.midRange,
-          luxury: costsResponse?.data.estimateDailyBudget?.luxury
-        },
-        totalEstimate: {
-          min: costsResponse?.data.totalEstimate?.min,
-          max: costsResponse?.data.totalEstimate?.max
-        },
-        costsSources: {
-          transport: costsResponse?.sources.transport as transportEnum,
-          accommodation: costsResponse?.sources.accommodation as accommodationEnum
-        }
-
-      },
-
-      /// Filipe lembra de add a resposta da llm aqui, crie a função para gerar o texto também
-
-
-
-
+    return {
+      wikipediaResponse: this.extractResult(wikipediaResult, 'Wikipedia'),
+      weatherResponse: this.extractResult(weatherResult, 'Weather'),
+      costsResponse: this.extractResult(costsResult, 'Costs'),
     };
-
   }
 
-  private async getOrCreateCity(slug: string, cityName: string, state: string): Promise<CityResponseDTO> {
+  private async fetchWikipediaInfo(
+    cityName: string,
+    state?: string,
+    country?: string,
+    includeSearch?: boolean,
+    includeSummary?: boolean
+  ): Promise<WikipediaOrchestratorOutput | null> {
     try {
-      const validatedSlug = isValidSlug(slug)
-      if (!validatedSlug) {
-        console.log(`[SearchDestinationUseCase] Slug fora da formato adequado: ${slug}`)
-        throw new Error(`[SearchDestinationUseCase] Slug fora da formato adequado: ${slug}`)
-      }
-      const getCityInput: GetCityInput = { slug: slug }
-      const result: GetCityOutput = await this.deps.getCityUseCase.execute(getCityInput)
-
-      return result.city
-
-    } catch (error) {
-      console.log(`[SearcDestinationUseCase] Cidade "${slug}" não encontrada. Criando ...`)
-
-
-      const createCityInput: CreateCityInput = {
-        name: cityName,
-        state,
-        country: 'Brasil'
-      }
-
-      const result: CreateCityOutput = await this.deps.createCityUseCase.execute(createCityInput)
-      return result.city
-    }
-  }
-
-  private async getCacheResponse(cityId: string): Promise<GetCachedResponseOutput> {
-    try {
-      const getCachedRespondeInput: GetCachedResponseInput = { cityId };
-      const result = await this.deps.getCachedResponseUseCase.execute(getCachedRespondeInput);
-
-      if (!result.cachedResponse) {
-        console.log(`[SearchDestinationUseCase] Sem resposta em Cache. Buscando...`);
-      }
-
-      return {
-        cachedResponse: result.cachedResponse ?? null,
-        isExpired: result.isExpired,
-        remainingTTL: result.remainingTTL ?? 0
-      };
-
-    } catch (error) {
-      console.log(`[SearchDestinationUseCase] Falha ao buscar cache da Cidade ${cityId}. Buscando...`, error);
-
-      return {
-        cachedResponse: null,
-        isExpired: true,
-        remainingTTL: 0
-      };
-    }
-  }
-
-
-  ///FetchAPI's Nike vive
-  private async fetchWikipediaOrchestrator(cityName: string, state?: string, country?: string): Promise<WikipediaOrchestratorOutput> {
-    try {
-      const wikipediaOrchestratorInput: WikipediaOrchestratorInput = {
+      const inputFetch: WikipediaOrchestratorInput = {
         cityName,
         state,
         country,
-        includeSearch: false,
-        includeSummary: true
-      }
+        includeSearch,
+        includeSummary,
+      };
 
-      const result: WikipediaOrchestratorOutput = await this.deps.wikipediaOrchestrator.execute(wikipediaOrchestratorInput)
-
-      return result
+      return await this.deps.wikipediaOrchestrator.execute(inputFetch);
     } catch (error) {
-      console.log('[SearchDestination] Wikipedia API error:', error)
-      return {
-        pageInfo: null,
-        summary: null
-      }
+      console.log(
+        `[SearchDestination] Erro ao buscar informações de ${cityName}:`,
+        error
+      );
+      return null;
     }
   }
-  private async fetchWeatherOrchestrator(
-    cityName: string,
+
+  private async fetchWeatherInfo(
     coordinates?: Coordinates,
+    cityName?: string,
     forecastDays?: number,
     targetMonth?: number,
     includeForecast?: boolean,
     includeSeasonal?: boolean
-  ): Promise<WeatherOrchestratorOutput> {
+  ): Promise<WeatherOrchestratorOutput | null> {
     try {
-      const weatherOrchestratorInput: WeatherOrchestratorInput = {
+      if (!cityName && !coordinates) {
+        throw new Error('Nome de cidade ou Coordenadas deve ser fornecido');
+      }
+
+      const inputFetch: WeatherOrchestratorInput = {
         cityName,
-        coordinates: coordinates ?? undefined,
-        forecastDays: forecastDays ?? 5,
-        targetMonth: targetMonth ?? undefined,
+        coordinates,
+        forecastDays: forecastDays ?? 3,
+        targetMonth: targetMonth ?? 1,
         includeForecast: includeForecast ?? true,
-        includeSeasonal: includeSeasonal ?? false
+        includeSeasonal: includeSeasonal ?? false,
       };
 
-      const result: WeatherOrchestratorOutput = await this.deps.weatherOrchestrator.execute(weatherOrchestratorInput);
-
-      return {
-        current: result.current || null,
-        forecast: result.forecast || null,
-        seasonal: result.seasonal || null,
-        location: {
-          city: result.location?.city || cityName,
-          coordinates: result.location?.coordinates || coordinates
-        }
-      };
-
+      return this.deps.weatherOrchestrator.execute(inputFetch);
     } catch (error) {
-      console.log(`[SearchDestinationUseCase] Falha ao buscar dados meteorológicos para ${cityName}`, error);
-
-
-      return {
-        current: null,
-        forecast: null,
-        seasonal: null,
-        location: {
-          city: cityName,
-          coordinates: coordinates
-        }
-      };
+      console.log(
+        `[SearchDestination] Erro ao buscar informações do Clima de ${cityName}:`,
+        error
+      );
+      return null;
     }
   }
 
-  private async fetchCostsOrchestrator(
+  private async fetchCostsInfo(
     origin: string,
-    cityName: string,
+    destination: string,
     startDate?: Date,
     endDate?: Date,
-    originCoordinates?: Coordinates,
-    cityCoordinates?: Coordinates
-  ): Promise<CostsServiceOutput> {
+    destinationCoordinates?: Coordinates
+  ): Promise<CostsServiceOutput | null> {
     try {
       const start = startDate || new Date();
       const end = endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-      const costsServicesInput: CostsServiceInput = {
+      const inputFetch: CostsServiceInput = {
         origin,
-        destination: cityName,
+        destination,
         startDate: start,
         endDate: end,
-        originCoordinates: originCoordinates ?? undefined,
-        destinationCoordinates: cityCoordinates ?? undefined,
+        destinationCoordinates,
         includeHotelsList: true,
-        hotelsLimit: 20
+        hotelsLimit: 20,
       };
 
-      const result = await this.deps.costsOrchestrator.execute(costsServicesInput);
-
-      return {
-        data: result.data,
-        nights: result.nights,
-        sources: result.sources,
-        hotels: result.hotels
-      };
-
+      return await this.deps.costsOrchestrator.execute(inputFetch);
     } catch (error) {
-      console.log(`[SearchDestinationUseCase] Falha ao calcular preços de ${origin} para ${cityName}. Error:`, error);
-
-      const fallbackData: CostEstimateDTO = {
-        currency: 'BRL',
-        transport: {
-          bus: undefined,
-          flight: undefined,
-          currency: 'BRL'
-        },
-        accommodation: {
-          budget: { min: 60, max: 120 },
-          midRange: { min: 120, max: 250 },
-          luxury: { min: 250, max: 500 },
-          currency: 'BRL'
-        },
-        estimateDailyBudget: {
-          budget: 110, // 60 + 50
-          midRange: 220,
-          luxury: 450
-        },
-        totalEstimate: {
-          min: 770,
-          max: 3150
-        }
-      };
-
-      return {
-        data: fallbackData,
-        nights: 7,
-        sources: {
-          transport: "estimated",
-          accommodation: "estimated"
-        },
-        hotels: {
-          hotels: [],
-          total: 0
-        }
-      };
+      console.log(
+        `[SearchDestination] Erro ao buscar informações de custo de ${origin} para ${destination}:`,
+        error
+      );
+      return null;
     }
   }
 
-  /// HELPERS REPOSITORIES
-  private incrementCountPopularityCity(cityId: string): void {
-    const updateCityPopularityInput: UpdateCityPopularityInput = {
-      cityId
+  //LLM
+
+  private async generateGuideTextWithLLM(
+    input: GenerateTravelGuideInput
+  ): Promise<string> {
+    try {
+      console.log('[SearchDestination] Gerando texto com LLM...');
+
+      const result = await this.deps.llmService.generateTravelGuide(input);
+
+      return result.text;
+    } catch (error) {
+      console.error(
+        '[SearchDestination] Erro ao gerar texto com LLM. Usando fallback...',
+        error
+      );
+
+      return this.generateFallbackText(
+        input.cityName,
+        input.cityInfo ??
+          `A cidade de ${input.cityName} tem das paisagens mais belas do pais, sendo um dos principais pontos turísticos do seu estado`,
+        input.weather
+          ? {
+              current: {
+                temperature: 25,
+                condition: 'Ensolarado',
+                description: 'Céu claro e sem nuvens',
+                humidity: 60,
+              },
+              forecast: [
+                {
+                  date: new Date(Date.now() + 86400000),
+                  temperature: 28,
+                  condition: 'Parcialmente Nublado',
+                },
+                {
+                  date: new Date(Date.now() + 2 * 86400000),
+                  temperature: 26,
+                  condition: 'Chuva Leve',
+                },
+                {
+                  date: new Date(Date.now() + 3 * 86400000),
+                  temperature: 29,
+                  condition: 'Ensolarado',
+                },
+              ],
+              seasonal: {
+                season: 'Verão',
+                averageTemperature: 27,
+                description: 'Estação quente e úmida.',
+              },
+            }
+          : undefined,
+        input.costs
+          ? {
+              transport: {
+                bus: {
+                  min: 50,
+                  max: 200,
+                },
+                flight: {
+                  min: 300,
+                  max: 1500,
+                },
+              },
+              accommodation: {
+                budget: {
+                  min: 80,
+                  max: 150,
+                },
+                midRange: {
+                  min: 180,
+                  max: 350,
+                },
+                luxury: {
+                  min: 400,
+                  max: 800,
+                },
+              },
+              currency: 'BRL',
+            }
+          : undefined
+      );
+    }
+  }
+
+  private generateFallbackText(
+    cityName: string,
+    wikipedia: string | null,
+    weather?: {
+      current?: {
+        temperature: number;
+        condition: string;
+        description?: string;
+        humidity?: number;
+      };
+      forecast?: Array<{
+        date: Date;
+        temperature: number;
+        condition: string;
+      }>;
+      seasonal?: {
+        season: string;
+        averageTemperature: number;
+        description?: string;
+      };
+    },
+    costs?: {
+      transport?: {
+        bus?: { min?: number; max?: number };
+        flight?: { min?: number; max?: number };
+      };
+      accommodation?: {
+        budget?: { min?: number; max?: number };
+        midRange?: { min?: number; max?: number };
+        luxury?: { min?: number; max?: number };
+      };
+      currency?: string;
+    }
+  ): string {
+    let text = `# Guia de Viagem para ${cityName}\n\n`;
+
+    if (wikipedia) {
+      text += `## Sobre ${cityName}\n\n`;
+      text += `${wikipedia.substring(0, 400)}...\n\n`;
+    }
+
+    if (weather?.current) {
+      text += `## Clima Atual\n\n`;
+      text += `Temperatura: ${weather.current.temperature}°C`;
+      if (weather.current.humidity) {
+        text += ` | Umidade: ${weather.current.humidity}%`;
+      }
+      text += `\n`;
+      text += `Condição: ${weather.current.condition}`;
+      if (weather.current.description) {
+        text += ` - ${weather.current.description}`;
+      }
+      text += `\n\n`;
+    }
+
+    if (weather?.forecast && weather.forecast.length > 0) {
+      text += `## Previsão dos Próximos Dias\n\n`;
+      weather.forecast.slice(0, 3).forEach((day) => {
+        const date = new Date(day.date).toLocaleDateString('pt-BR');
+        text += `- ${date}: ${day.temperature}°C, ${day.condition}\n`;
+      });
+      text += '\n';
+    }
+
+    if (costs) {
+      text += `## Estimativa de Custos\n\n`;
+      const currency = costs.currency || 'BRL';
+
+      if (costs.transport?.flight) {
+        text += `Passagem Aérea: ${currency} ${costs.transport.flight.min} - ${currency} ${costs.transport.flight.max}\n`;
+      }
+
+      if (costs.transport?.bus) {
+        text += `Ônibus: ${currency} ${costs.transport.bus.min} - ${currency} ${costs.transport.bus.max}\n`;
+      }
+
+      if (costs.accommodation) {
+        text += `\nHospedagem (por noite):\n`;
+        if (costs.accommodation.budget) {
+          text += `- Econômica: ${currency} ${costs.accommodation.budget.min} - ${currency} ${costs.accommodation.budget.max}\n`;
+        }
+        if (costs.accommodation.midRange) {
+          text += `- Intermediária: ${currency} ${costs.accommodation.midRange.min} - ${currency} ${costs.accommodation.midRange.max}\n`;
+        }
+        if (costs.accommodation.luxury) {
+          text += `- Luxo: ${currency} ${costs.accommodation.luxury.min} - ${currency} ${costs.accommodation.luxury.max}\n`;
+        }
+      }
+
+      text += '\n';
+    }
+
+    text += `\n---\n\n`;
+
+    return text;
+  }
+
+  //builds
+  private async buildCacheData(
+    cityName: string,
+    fetchedData: IFetchedCityData,
+    generatedText: string
+  ): Promise<CachedResponseData> {
+    const { wikipediaResponse, weatherResponse, costsResponse } = fetchedData;
+
+    const weatherInfo: WeatherInfo = {
+      current: weatherResponse?.current
+        ? { ...weatherResponse.current }
+        : undefined,
+      forecast: weatherResponse?.forecast?.map((f) => ({
+        date: new Date(f.date),
+        temperature: f.temperature,
+        temperatureMin: f.temperatureMin,
+        temperatureMax: f.temperatureMax,
+        condition: f.condition,
+        description: f.description,
+        humidity: f.humidity,
+        chanceOfRain: f.chanceOfRain,
+      })),
+      seasonal: weatherResponse?.seasonal
+        ? {
+            season: weatherResponse.seasonal.season as season,
+            averageTemperature: weatherResponse.seasonal.averageTemperature,
+            averageRainfall: weatherResponse.seasonal.averageRainfall,
+            description: weatherResponse.seasonal.description,
+          }
+        : undefined,
     };
+    const costsTotal = {
+      accommodation: {
+        budgetMin: costsResponse?.data.accommodation?.budget?.min,
+        budgetMax: costsResponse?.data.accommodation?.budget?.max,
+        midRangeMin: costsResponse?.data.accommodation?.midRange?.min,
+        midRangeMax: costsResponse?.data.accommodation?.midRange?.max,
+        luxuryMin: costsResponse?.data.accommodation?.luxury?.min,
+        luxuryMax: costsResponse?.data.accommodation?.luxury?.max,
+      },
+      transport: {
+        busMin: costsResponse?.data.transport?.bus?.min,
+        busMax: costsResponse?.data.transport?.bus?.max,
+        flightMin: costsResponse?.data.transport?.flight?.min,
+        flightMax: costsResponse?.data.transport?.flight?.max,
+      },
+      estimateDailyBugdet: {
+        bugdet: costsResponse?.data.estimateDailyBudget?.budget,
+        midRange: costsResponse?.data.estimateDailyBudget?.midRange,
+        luxury: costsResponse?.data.estimateDailyBudget?.luxury,
+      },
+      totalEstimate: {
+        min: costsResponse?.data.totalEstimate?.min,
+        max: costsResponse?.data.totalEstimate?.max,
+      },
+      costsSources: {
+        transport:
+          costsResponse?.sources.transport === 'api'
+            ? transportEnum.api
+            : transportEnum.estimated,
+        accommodation:
+          costsResponse?.sources.accommodation === 'api'
+            ? accommodationEnum.api
+            : accommodationEnum.estimated,
+      },
+    };
+    return {
+      cityInfo:
+        wikipediaResponse?.pageInfo?.extract ||
+        wikipediaResponse?.summary?.extract ||
+        `Informações sobre ${cityName}`,
+      weatherInfo,
+      costsTotal,
+      generatedText,
+      generatedAt: new Date(),
+      hotels: costsResponse?.hotels?.hotels || [],
+    };
+  }
 
-    this.deps.updateCityPopularityUseCase.execute(updateCityPopularityInput)
-      .then((result: UpdateCityPopularityOutput) => {
-        const { requestCount, becamePopular, isPopular } = result;
+  private buildClientResponse(
+    city: CityResponseDTO,
+    data: CachedResponseData,
+    fromCache: boolean
+  ): DestinationInfoResponseDTO {
+    return {
+      cityInfo: {
+        description: data.cityInfo || `Informações sobre ${city.name}`,
+        summary: data.cityInfo,
+        extractedAt: data.generatedAt,
+      },
 
-        console.log(`[SearchDestinationUseCase] Popularidade atualizada: ${requestCount} requests`);
+      city: {
+        id: city.id,
+        name: city.name,
+        state: city.state,
+        country: city.country,
+        slug: city.slug,
+        coordinates: city.coordinates,
+        requestCount: city.requestCount,
+        isPopular: city.isPopular,
+      },
 
-        return {
-          requestCount,
-          becamePopular,
-          isPopular
-        };
+      textGenerated: data.generatedText || '',
+
+      weather: data.weatherInfo
+        ? {
+            current: data.weatherInfo.current,
+            forecast: data.weatherInfo.forecast,
+            seasonal: data.weatherInfo.seasonal,
+          }
+        : undefined,
+
+      costs: data.costsTotal
+        ? {
+            currency: 'BRL',
+            transport: {
+              bus:
+                data.costsTotal.transport?.busMin &&
+                data.costsTotal.transport?.busMax
+                  ? {
+                      min: data.costsTotal.transport.busMin,
+                      max: data.costsTotal.transport.busMax,
+                    }
+                  : undefined,
+              flight:
+                data.costsTotal.transport?.flightMin &&
+                data.costsTotal.transport?.flightMax
+                  ? {
+                      min: data.costsTotal.transport.flightMin,
+                      max: data.costsTotal.transport.flightMax,
+                    }
+                  : undefined,
+              currency: 'BRL',
+            },
+            accommodation: {
+              budget:
+                data.costsTotal.accommodation?.budgetMin &&
+                data.costsTotal.accommodation?.budgetMax
+                  ? {
+                      min: data.costsTotal.accommodation.budgetMin,
+                      max: data.costsTotal.accommodation.budgetMax,
+                    }
+                  : undefined,
+              midRange:
+                data.costsTotal.accommodation?.midRangeMin &&
+                data.costsTotal.accommodation?.midRangeMax
+                  ? {
+                      min: data.costsTotal.accommodation.midRangeMin,
+                      max: data.costsTotal.accommodation.midRangeMax,
+                    }
+                  : undefined,
+              luxury:
+                data.costsTotal.accommodation?.luxuryMin &&
+                data.costsTotal.accommodation?.luxuryMax
+                  ? {
+                      min: data.costsTotal.accommodation.luxuryMin,
+                      max: data.costsTotal.accommodation.luxuryMax,
+                    }
+                  : undefined,
+              currency: 'BRL',
+            },
+            estimateDailyBudget: data.costsTotal.estimateDailyBudget,
+            totalEstimate: data.costsTotal.totalEstimate,
+          }
+        : undefined,
+
+      hotels: data.hotels || [],
+
+      cache: {
+        cached: fromCache,
+        cachedAt: fromCache ? data.generatedAt : undefined,
+        source: fromCache ? 'redis' : 'fresh',
+      },
+
+      metadata: {
+        generatedAt: data.generatedAt || new Date(),
+      },
+
+      sources: [
+        {
+          name: 'Wikipedia',
+          type: 'api',
+          accessedAt: data.generatedAt,
+        },
+        ...(data.weatherInfo?.current
+          ? [
+              {
+                name: 'Weather API',
+                type: 'api' as const,
+                accessedAt: data.generatedAt,
+              },
+            ]
+          : []),
+        ...(data.costsTotal
+          ? [
+              {
+                name: 'Costs API',
+                type: 'api' as const,
+                accessedAt: data.generatedAt,
+              },
+            ]
+          : []),
+      ],
+    };
+  }
+
+  private createSearchHistoryAsync(
+    userId: string,
+    cityId: string,
+    cityName: string,
+    state: string,
+    startDate?: Date,
+    endDate?: Date
+  ): void {
+    const start = startDate || new Date();
+    const end = endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const createInput: CreateSearchHistoryInput = {
+      cityId,
+      cityName,
+      state,
+      country: 'Brasil',
+      userId,
+      travelStartDate: start,
+      travelEndDate: end,
+    };
+    this.deps.createSearchHistoryUseCase
+      .execute(createInput)
+      .then(() => {
+        console.log('[SearchDestination] Busca registrada no histórico');
       })
-      .catch((error: Error) => {
-        console.log(`[SearchDestinationUseCase] Falha ao atualizar popularidade da cidade`, error);
+      .catch((error) => {
+        console.error(
+          '[SearchDestination] Erro ao registrar histórico:',
+          error
+        );
       });
   }
 
-  //HELPERS SERVICES
+  //Helpers
+
+  private validateSeason(seasonStr: string): season {
+    const validSeasons: season[] = [
+      season.summer,
+      season.autumn,
+      season.winter,
+      season.spring,
+    ];
+
+    const normalized = seasonStr.toLowerCase() as season;
+
+    if (validSeasons.includes(normalized)) {
+      return normalized;
+    }
+
+    const month = new Date().getMonth();
+    if (month >= 11 || month <= 1) return season.summer;
+    if (month >= 2 && month <= 4) return season.autumn;
+    if (month >= 5 && month <= 7) return season.winter;
+    return season.spring;
+  }
+
   private extractResult<T>(
-    result: PromiseSettledResult<T | null>,
+    result: PromiseSettledResult<T>,
     serviceName: string
   ): T | null {
     if (result.status === 'fulfilled') {
       const value = result.value;
-      const log = value ? 'log' : 'warn';
+      const hasValue = value !== null && value !== undefined;
 
-      const message = value ? 'sucesso' : 'retornou null';
+      console.log(
+        `[SearchDestination] ${serviceName} - ${hasValue ? 'sucesso' : 'null'}`
+      );
 
-      console[log](`SearchDestinationUseCase] ${serviceName} - ${message}`);
       return value;
     }
 
-    console.error(`❌ [SearchDestinationUseCase] ${serviceName} - falha:`, result.reason);
+    console.error(
+      `[SearchDestination] ${serviceName} - ❌ falha:`,
+      result.reason
+    );
     return null;
   }
-  /// HELPERS
-  private validateId(id: string): void {
-    if (!id || id.trim().length === 0) {
-      throw new Error('[SearchDestinationUseCase] Id da Cidade deve ser informado')
-    }
-    const uuidV4 = new RegExp(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)
 
-    const valid = uuidV4.test(id)
-    if (!valid) {
-      throw new Error('[SearchDestinationUseCase] Formato de Id inválido')
-    }
+  protected calculateNights(chekIn: Date, checkout: Date): number {
+    const diffTime = Math.abs(checkout.getTime() - chekIn.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
-
-
-
-  /// LLM
-
-  private async generatedGuideText(
-    params: {
-      cityName: string,
-      weather: WeatherInfo,
-    }
-  )
-
-
 }
