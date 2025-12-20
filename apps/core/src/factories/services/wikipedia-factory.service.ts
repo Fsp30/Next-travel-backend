@@ -1,7 +1,7 @@
-import { WikipediaOrchestratorService } from './wikipedia-orchestrator.service';
-import { WikipediaSummaryService } from './wikipedia-summary.service';
-import { WikipediaCityInfoService } from './wikipedia-city-info.service';
-import { WikipediaSearchService } from './wikipedia-search.service';
+import { WikipediaOrchestratorService } from '../../infrastructure/external-services/wikipedia-service/wikipedia-orchestrator.service';
+import { WikipediaSummaryService } from '../../infrastructure/external-services/wikipedia-service/wikipedia-summary.service';
+import { WikipediaCityInfoService } from '../../infrastructure/external-services/wikipedia-service/wikipedia-city-info.service';
+import { WikipediaSearchService } from '../../infrastructure/external-services/wikipedia-service/wikipedia-search.service';
 export class WikipediaServiceFactory {
   /**
    * @returns {WikipediaOrchestratorService}
