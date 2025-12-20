@@ -22,6 +22,7 @@
     "baseUrl": "apps",
     "paths": {
       "@generated/*": ["generated/*"],
+      "@/*": ["*"]
     }
   },
   "include": ["apps/**/*"],
