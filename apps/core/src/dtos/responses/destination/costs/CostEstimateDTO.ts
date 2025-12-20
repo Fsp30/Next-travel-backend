@@ -16,7 +16,7 @@ export const TransportCostsDTOSchema = z.object({
   currency: z.string().default('BRL'),
 });
 
-export const AccomodationCostsDTOSchema = z.object({
+export const AccommodationCostsDTOSchema = z.object({
   budget: z
     .object({
       min: z.number().optional(),
@@ -40,7 +40,7 @@ export const AccomodationCostsDTOSchema = z.object({
 
 export const CostEstimateDTOSchema = z.object({
   transport: TransportCostsDTOSchema.optional(),
-  accomodation: AccomodationCostsDTOSchema.optional(),
+  accommodation: AccommodationCostsDTOSchema.optional(),
   estimateDailyBudget: z
     .object({
       budget: z.number().optional(),
@@ -58,5 +58,5 @@ export const CostEstimateDTOSchema = z.object({
 });
 
 export type TransportCostsDTO = z.infer<typeof TransportCostsDTOSchema>;
-export type AccomodationCostsDTO = z.infer<typeof AccomodationCostsDTOSchema>;
+export type AccommodationCostsDTO = z.infer<typeof AccommodationCostsDTOSchema>;
 export type CostEstimateDTO = z.infer<typeof CostEstimateDTOSchema>;

@@ -8,6 +8,9 @@ export class UserId {
   static create(value?: string): UserId {
     return new UserId(value ?? randomUUID());
   }
+  static fromString(value: string): UserId {
+    return new UserId(value);
+  }
 
   private validate(): void {
     if (!this.value || this.value.trim().length === 0) {

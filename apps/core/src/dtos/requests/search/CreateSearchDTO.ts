@@ -2,6 +2,8 @@ import z from 'zod';
 
 export const CreateSearchDTOSchema = z
   .object({
+    cityId: z.uuidv4('Formato de ID inválido'),
+
     cityName: z
       .string()
       .min(2, 'Cidade deve ter nome com mais de 2 carateres')

@@ -1,10 +1,50 @@
+import {
+  SeasonalWeatherDTO,
+  WeatherCurrentDataDTO,
+  WeatherForecastDTO,
+} from '../../dtos';
+import { HotelInfo } from '../../infrastructure/external-services/costs-service/accommodation-service/interface/IHotels.interface';
 import { CityId } from '../value-objects/CityId';
 
+export enum season {
+  summer = 'summer',
+  autumn = 'autumn',
+  winter = 'winter',
+  spring = 'spring',
+}
+export enum transportEnum {
+  api = 'api',
+  estimated = 'estimated',
+}
+
+export enum accommodationEnum {
+  api = 'api',
+  estimated = 'estimated',
+}
 export interface WeatherInfo {
-  temperature?: number;
-  condition?: string;
-  humidity?: number;
-  description?: string;
+  current?: WeatherCurrentDataDTO;
+  forecast?: WeatherForecastDTO[];
+  seasonal?: SeasonalWeatherDTO;
+}
+
+export interface CostsSource {
+  transport: transportEnum;
+  accommodation: accommodationEnum;
+}
+
+export interface CostsTotal {
+  transport?: TransportCosts;
+  accommodation?: AccommodationCosts;
+  estimateDailyBudget?: {
+    bugdet?: number;
+    midRange?: number;
+    luxury?: number;
+  };
+  totalEstimate?: {
+    min?: number;
+    max?: number;
+  };
+  costsSources: CostsSource;
 }
 
 export interface TransportCosts {
@@ -26,9 +66,10 @@ export interface AccommodationCosts {
 export interface CachedResponseData {
   cityInfo: string;
   weatherInfo?: WeatherInfo;
-  transportCosts?: TransportCosts;
-  accommodationCosts?: AccommodationCosts;
+  costsTotal?: CostsTotal;
   generatedText?: string;
+  generatedAt?: Date;
+  hotels?: HotelInfo[];
 }
 
 export interface CachedResponseProps {
