@@ -4,4 +4,4 @@ build
 coverage
 .env
 *.log
-prisma
+apps/generated
