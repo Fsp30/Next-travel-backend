@@ -1,16 +1,15 @@
 import { User } from '@/core/src/domain/entities/User';
 import { UserId } from '@/core/src/domain/value-objects';
 
-
 export interface PrismaUserDTO {
   id: string;
   email: string;
   name: string;
-  googleId: string;              
-  profilePicture: string | null; 
-  createdAt: Date;              
-  updatedAt: Date;               
-  lastLogin: Date | null;        
+  googleId: string;
+  profilePicture: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLogin: Date | null;
 }
 
 export class PrismaUserMapper {
@@ -19,7 +18,7 @@ export class PrismaUserMapper {
       id: UserId.create(prismaUser.id),
       email: prismaUser.email,
       name: prismaUser.name,
-      googleId: prismaUser.googleId,     
+      googleId: prismaUser.googleId,
       profilePicture: prismaUser.profilePicture ?? undefined,
       lastLogin: prismaUser.lastLogin ?? undefined,
       createdAt: prismaUser.createdAt,
@@ -32,7 +31,7 @@ export class PrismaUserMapper {
       id: user.id.value,
       email: user.email,
       name: user.name,
-      googleId: user.googleId,           
+      googleId: user.googleId,
       profilePicture: user.profilePicture ?? null,
       lastLogin: user.lastLogin ?? null,
     };
