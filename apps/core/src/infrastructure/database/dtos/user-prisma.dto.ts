@@ -1,15 +1,16 @@
 import { User } from '@/core/src/domain/entities/User';
 import { UserId } from '@/core/src/domain/value-objects';
 
+
 export interface PrismaUserDTO {
   id: string;
   email: string;
   name: string;
-  google_id: string;
-  profile_picture: string | null;
-  created_at: Date;
-  updated_at: Date;
-  last_login: Date | null;
+  googleId: string;              
+  profilePicture: string | null; 
+  createdAt: Date;              
+  updatedAt: Date;               
+  lastLogin: Date | null;        
 }
 
 export class PrismaUserMapper {
@@ -18,11 +19,11 @@ export class PrismaUserMapper {
       id: UserId.create(prismaUser.id),
       email: prismaUser.email,
       name: prismaUser.name,
-      googleId: prismaUser.google_id,
-      profilePicture: prismaUser.profile_picture ?? undefined,
-      lastLogin: prismaUser.last_login ?? undefined,
-      createdAt: prismaUser.created_at,
-      updatedAt: prismaUser.updated_at,
+      googleId: prismaUser.googleId,     
+      profilePicture: prismaUser.profilePicture ?? undefined,
+      lastLogin: prismaUser.lastLogin ?? undefined,
+      createdAt: prismaUser.createdAt,
+      updatedAt: prismaUser.updatedAt,
     });
   }
 
@@ -31,9 +32,9 @@ export class PrismaUserMapper {
       id: user.id.value,
       email: user.email,
       name: user.name,
-      google_id: user.googleId,
-      profile_picture: user.profilePicture ?? null,
-      last_login: user.lastLogin ?? null,
+      googleId: user.googleId,           
+      profilePicture: user.profilePicture ?? null,
+      lastLogin: user.lastLogin ?? null,
     };
   }
 }
