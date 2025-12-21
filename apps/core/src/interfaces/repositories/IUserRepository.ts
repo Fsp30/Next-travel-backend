@@ -15,13 +15,17 @@ export interface IUserRepository {
   existsByEmail(email: string): Promise<boolean>;
   existsByGoogleId(googleId: string): Promise<boolean>;
 
-  findAll(
-    page?: number,
-    limit?: number
-  ): Promise<{
-    users: User[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }>;
+  findMany(options?: {
+    skip?: number;
+    take?: number;
+    where?: {
+      email?: string;
+      name?: string;
+    };
+    orderBy?: {
+      createdAt?: 'asc' | 'desc';
+      lastLogin?: 'asc' | 'desc';
+      name?: 'asc' | 'desc';
+    };
+  }): Promise<User[]>;
 }
