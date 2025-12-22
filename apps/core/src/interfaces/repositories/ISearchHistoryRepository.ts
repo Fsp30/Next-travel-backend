@@ -19,7 +19,7 @@ export interface FindSearchHistoryOptions {
 }
 
 export interface ISearchHistoryRepostitory {
-  create(data: CreateSearchHistoryData): Promise<SearchHistory>;
+  create(data: SearchHistory): Promise<SearchHistory>;
 
   findById(id: string): Promise<SearchHistory | null>;
   findByUserId(userId: string): Promise<SearchHistory | null>;
