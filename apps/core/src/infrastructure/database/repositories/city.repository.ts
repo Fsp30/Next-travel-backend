@@ -149,28 +149,27 @@ export class CityRepository implements ICityRepository {
   async findMany(options?: ICitiesQueriesProps): Promise<City[] | null> {
     try {
       const cities = await this.prisma.city.findMany({
-        skip: options?.skip || 0,
+        skip: options?.skip ?? 0,
         take: options?.take || 20,
         where: {
           ...(options?.where?.state && {
             state: { contains: options.where.state, mode: 'insensitive' },
           }),
           ...(options?.where?.country && {
-            state: { contains: options.where.country, mode: 'insensitive' },
+            country: { contains: options.where.country, mode: 'insensitive' },
           }),
         },
         orderBy: options?.orderBy,
       });
 
-      if (!cities) {
-        console.log('There is no record cities.');
-        return null;
+      if (cities.length === 0) {
+        return [];
       }
 
       return cities.map((city) => PrismaCityMapper.toDomain(city));
     } catch (error) {
-      console.log('Error finding citties: ', error);
-      throw new Error('Falha ao buscar multiplas cidades');
+      console.error('Error finding cities: ', error);
+      throw new Error('Falha ao buscar múltiplas cidades');
     }
   }
 
