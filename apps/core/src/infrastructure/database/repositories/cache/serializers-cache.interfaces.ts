@@ -86,14 +86,14 @@ export interface SerializedResponseData {
   weatherInfo?: SerializedWeatherInfo;
   costsTotal?: SerializedCostsTotal;
   generatedText?: string;
-  generatedAt?: string; 
+  generatedAt?: string;
   hotels?: SerializedHotel[];
 }
 
 export interface SerializedCachedResponse {
   cityId: string;
   responseData: SerializedResponseData;
-  createdAt: string; 
-  expiresAt: string; 
+  createdAt: string;
+  expiresAt: string;
   hitCount: number;
 }
