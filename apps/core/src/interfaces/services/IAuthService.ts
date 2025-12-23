@@ -28,9 +28,4 @@ export interface IAuthService {
   generateRefreshToken(user: User): Promise<string>;
   verifyRefreshToken(token: string): Promise<{ userId: string }>;
   refreshAccessToken(refreshToken: string): Promise<AuthTokens>;
-
-  revokeTokens(userId: string): Promise<void>;
-
-  hashPassword(password: string): Promise<string>;
-  comparePassword(password: string, hash: string): Promise<boolean>;
 }
