@@ -1,9 +1,9 @@
-import { CalculateAccommodationCostsService } from './accommodation-service/accommodation-calculate-costs.service';
-import { AccommodationOrchestratorService } from './accommodation-service/accommodation-orchestrator.service';
-import { ListHotelsService } from './accommodation-service/accomodation-list-hotels.service';
+import { CalculateAccommodationCostsService } from '../../infrastructure/external-services/costs-service/accommodation-service/accommodation-calculate-costs.service';
+import { AccommodationOrchestratorService } from '../../infrastructure/external-services/costs-service/accommodation-service/accommodation-orchestrator.service';
+import { ListHotelsService } from '../../infrastructure/external-services/costs-service/accommodation-service/accomodation-list-hotels.service';
 
-import { CostsOrchestratorService } from './costs-orchestrator.service';
-import { TransportCostsService } from './transport-service';
+import { CostsOrchestratorService } from '../../infrastructure/external-services/costs-service/costs-orchestrator.service';
+import { TransportCostsService } from '../../infrastructure/external-services/costs-service/transport-service';
 
 export class CostsServiceFactory {
   /**

@@ -34,20 +34,14 @@ export class CreateSearchHistoryUseCase extends BaseUseCase<
       );
     }
 
-    SearchHistory.create({
+    const entity = SearchHistory.create({
       userId,
       cityId,
       travelDateRange,
       ipAddress: validatedData.ipAdress,
       userAgent: validatedData.userAgent,
     });
-    const saved = await this.searchHistoryRepository.create({
-      userId,
-      cityId,
-      travelDataRange: travelDateRange,
-      ipAdress: validatedData.ipAdress,
-      userAgent: validatedData.userAgent,
-    });
+    const saved = await this.searchHistoryRepository.create(entity);
 
     return {
       searchHistoryId: saved.id,

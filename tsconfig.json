@@ -18,7 +18,12 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "apps",
+    "paths": {
+      "@generated/*": ["generated/*"],
+      "@/*": ["*"]
+    }
   },
   "include": ["apps/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
