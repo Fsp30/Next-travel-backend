@@ -40,10 +40,10 @@ export class PrismaSearchHistoryMapper {
     return {
       id: searchHistory.id,
       user: {
-        connect: { id: searchHistory.userId.value }, 
+        connect: { id: searchHistory.userId.value },
       },
       city: {
-        connect: { id: searchHistory.cityId.value }, 
+        connect: { id: searchHistory.cityId.value },
       },
       travelStartDate: searchHistory.travelDateRange?.startDate ?? null,
       travelEndDate: searchHistory.travelDateRange?.endDate ?? null,
@@ -67,7 +67,6 @@ export class PrismaSearchHistoryMapper {
       userAgent: searchHistory.userAgent ?? null,
     };
   }
-
 
   static toDomainMany(
     prismaSearchHistories: PrismaSearchHistoryDTO[]
