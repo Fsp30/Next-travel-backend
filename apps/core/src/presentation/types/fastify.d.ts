@@ -7,6 +7,8 @@ declare module 'fastify' {
       id: string;
       email: string;
     };
+    startTime?: number;
     app: AppInstance;
   }
 }
+git 
