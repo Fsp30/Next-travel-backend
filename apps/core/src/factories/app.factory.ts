@@ -29,7 +29,7 @@ export class AppFactory {
     const repositories = {
       cache: CacheRepositoryFactory.create(redis),
       user: UserRepositoryFactory.create(prisma),
-      city: CityRepositoryFactory.creata(prisma),
+      city: CityRepositoryFactory.create(prisma),
       searchHistory: SearchHistoryRepositoryFactory.create(prisma),
     };
 
@@ -38,7 +38,7 @@ export class AppFactory {
       auth: AuthServiceFactory.create(repositories.user),
 
       wikipedia: WikipediaServiceFactory.create(),
-      weaather: WeatherServiceFactory.create(),
+      weather: WeatherServiceFactory.create(),
       costs: CostsServiceFactory.create(),
     };
 
@@ -50,12 +50,12 @@ export class AppFactory {
 
       refreshToken: RefreshTokenFactory.create(services.auth),
 
-      searchdDestination: SearchDestinationFactory.createWithAllDependencies(
+      searchDestination: SearchDestinationFactory.createWithAllDependencies(
         repositories.cache,
         repositories.city,
         repositories.searchHistory,
         services.wikipedia,
-        services.weaather,
+        services.weather,
         services.costs,
         services.llm
       ),
