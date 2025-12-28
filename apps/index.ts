@@ -1,15 +1,15 @@
-import { Response } from 'express';
-import app from './app';
-import dotenv from 'dotenv';
+import fastify from 'fastify'
 
-dotenv.config();
+const server = fastify()
 
-const port = process.env.PORT;
+server.get('/', async () => {
+  return 'test\n'
+})
 
-app.get('/', (res: Response) => {
-  res.json({ message: 'Next Travel Backend' });
-});
-
-app.listen(port, () => {
-  console.log(`http://localhost:${port}`);
-});
+server.listen({ port: 8080 }, (err, address) => {
+  if (err) {
+    console.error(err)
+    process.exit(1)
+  }
+  console.log(`Server listening at ${address}`)
+})
