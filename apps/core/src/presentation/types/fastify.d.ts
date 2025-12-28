@@ -11,4 +11,3 @@ declare module 'fastify' {
     app: AppInstance;
   }
 }
-git 
