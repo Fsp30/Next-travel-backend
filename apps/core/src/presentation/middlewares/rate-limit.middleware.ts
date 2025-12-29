@@ -1,3 +1,5 @@
+import { FastifyReply, FastifyRequest } from 'fastify';
+
 class RateLimiter {
   private request = new Map<string, number[]>();
   private readonly windowMs: number;
@@ -41,5 +43,23 @@ class RateLimiter {
 
       this.request.set(key, recent);
     }
+  }
+}
+
+const rate_limiter = new RateLimiter(60000, 100);
+
+export async function rateLimitMiddleware(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  const identifier = request.user?.id || request.ip;
+
+  if (!rate_limiter.isAllowed(identifier)) {
+    console.warn(`[RateLimit] Limite excedido: ${identifier}`);
+
+    return reply.status(429).send({
+      success: false,
+      error: 'Muitas requests. Tente em breve...',
+    });
   }
 }
