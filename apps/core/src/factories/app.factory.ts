@@ -23,6 +23,7 @@ import { GetUserFactory } from './use-cases/user/get-user.factory';
 import { UpdateUserFactory } from './use-cases/user/update-user.factory';
 import { DeleteUserFactory } from './use-cases/user/delete-user.factory';
 import { CreateUserFactory } from './use-cases/user/create-user.factory';
+import { GetPopularCitiesFactory } from './use-cases/city';
 
 export class AppFactory {
   private static instance: ReturnType<typeof AppFactory.create> | null = null;
@@ -56,6 +57,8 @@ export class AppFactory {
         repositories.user,
         services.auth
       ),
+
+      getPopularCities: GetPopularCitiesFactory.create(repositories.city),
 
       refreshToken: RefreshTokenFactory.create(services.auth),
 
