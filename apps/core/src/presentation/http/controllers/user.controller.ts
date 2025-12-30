@@ -83,7 +83,7 @@ export class UserController extends BaseController {
 
       return this.success(reply, updatedUser, 202);
     } catch (error: unknown) {
-      console.error('❌ [UserController] Erro ao atualizar perfil:', error);
+      console.error('[UserController] Erro ao atualizar perfil:', error);
       if (error instanceof z.ZodError) {
         const messages = error.issues.map((err) => err.message).join(', ');
         return this.error(reply, messages, 400);
@@ -93,6 +93,41 @@ export class UserController extends BaseController {
         if (error.message.includes('not found'))
           return this.error(reply, 'Usuário não encontrado', 404);
       }
+
+      throw error;
+    }
+  }
+
+  async deleteAccount(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      if (!request.user) {
+        return this.error(reply, 'Usuário não autenticado', 401);
+      }
+
+      const { useCases } = request.app;
+
+      const userId = request.user.id;
+      console.log(`[UserController] Deletando conta: ${userId}`);
+
+      await useCases.deleteUser.execute({ userId });
+
+      console.log('[UserController] Conta deletada com sucesso');
+
+      return this.noContent(reply);
+    } catch (error) {
+      console.error('❌ [UserController] Erro ao deletar conta:', error);
+
+      if (error instanceof z.ZodError) {
+        const messages = error.issues.map((err) => err.message).join(', ');
+        return this.error(reply, messages, 400);
+      }
+
+      if (error instanceof Error) {
+        if (error.message.includes('not found'))
+          return this.error(reply, 'Usuário não encontrado', 404);
+      }
+
+      throw error;
     }
   }
 }
