@@ -19,6 +19,10 @@ import {
   RefreshTokenFactory,
   SearchDestinationFactory,
 } from './use-cases';
+import { GetUserFactory } from './use-cases/user/get-user.factory';
+import { UpdateUserFactory } from './use-cases/user/update-user.factory';
+import { DeleteUserFactory } from './use-cases/user/delete-user.factory';
+import { CreateUserFactory } from './use-cases/user/create-user.factory';
 
 export class AppFactory {
   private static instance: ReturnType<typeof AppFactory.create> | null = null;
@@ -43,6 +47,11 @@ export class AppFactory {
     };
 
     const useCases = {
+      getUser: GetUserFactory.create(repositories.user),
+      createUser: CreateUserFactory.create(repositories.user),
+      updateUser: UpdateUserFactory.create(repositories.user),
+      deleteUser: DeleteUserFactory.create(repositories.user),
+
       authenticateUser: AuthenticateUserFactory.create(
         repositories.user,
         services.auth
