@@ -47,7 +47,6 @@
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.8",
-    "@fastify/swagger": "^9.6.1",
     "@prisma/client": "6.17.1",
     "@scalar/fastify-api-reference": "^1.40.9",
     "axios": "^1.13.2",
