@@ -1,5 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { BaseController } from './base.controller';
+import { validateCreateUserDTO } from '../../../dtos/requests/user/CreateUserDTO';
+import z from 'zod';
 
 export class UserController extends BaseController {
   async getProfile(request: FastifyRequest, reply: FastifyReply) {
@@ -22,6 +24,47 @@ export class UserController extends BaseController {
           return this.error(reply, 'Usuário não encontrado', 404);
         }
       }
+      throw error;
+    }
+  }
+
+  async createProfile(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      if (!request.body) {
+        return this.error(reply, 'Informações inválidas', 400);
+      }
+
+      const { useCases } = request.app;
+
+      const validatedInput = validateCreateUserDTO(request.body);
+
+      const user = await useCases.createUser.execute(validatedInput);
+
+      return this.success(reply, user, 201);
+    } catch (error) {
+      console.log('[userController] falha ao criar usuário: ', error);
+
+      if (error instanceof z.ZodError) {
+        const messages = error.issues.map((err) => err.message).join(', ');
+        return this.error(reply, messages, 400);
+      }
+
+      if (error instanceof Error) {
+        if (
+          error.message.includes('already exists') ||
+          error.message.includes('duplicate')
+        ) {
+          return this.error(reply, 'Usuário já existe', 409);
+        }
+
+        if (
+          error.message.includes('validation') ||
+          error.message.includes('invalid')
+        ) {
+          return this.error(reply, error.message, 400);
+        }
+      }
+
       throw error;
     }
   }
