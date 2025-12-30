@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { BaseController } from './base.controller';
 import { validateCreateUserDTO } from '../../../dtos/requests/user/CreateUserDTO';
 import z from 'zod';
+import { validateUpdateUserDTO } from '@/core/src/dtos';
 
 export class UserController extends BaseController {
   async getProfile(request: FastifyRequest, reply: FastifyReply) {
@@ -66,6 +67,32 @@ export class UserController extends BaseController {
       }
 
       throw error;
+    }
+  }
+  async updateProfile(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      if (!request.user) {
+        return this.error(reply, 'Usuário não autenticado', 401);
+      }
+
+      const { useCases } = request.app;
+
+      const validatedInput = validateUpdateUserDTO(request.body);
+
+      const updatedUser = await useCases.updateUser.execute(validatedInput);
+
+      return this.success(reply, updatedUser, 202);
+    } catch (error: unknown) {
+      console.error('❌ [UserController] Erro ao atualizar perfil:', error);
+      if (error instanceof z.ZodError) {
+        const messages = error.issues.map((err) => err.message).join(', ');
+        return this.error(reply, messages, 400);
+      }
+
+      if (error instanceof Error) {
+        if (error.message.includes('not found'))
+          return this.error(reply, 'Usuário não encontrado', 404);
+      }
     }
   }
 }
