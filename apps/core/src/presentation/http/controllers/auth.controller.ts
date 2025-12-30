@@ -21,4 +21,33 @@ export class AuthController extends BaseController {
       throw error;
     }
   }
+
+  async refreshToken(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      console.log('🔄 [AuthController] Iniciando refresh de token');
+
+      const { refreshToken } = request.body as { refreshToken: string };
+
+      if (!refreshToken) {
+        return this.error(reply, 'Refresh token não fornecido', 400);
+      }
+
+      const { useCases } = request.app;
+      const result = await useCases.refreshToken.execute({ refreshToken });
+
+      console.log('[AuthController] Token renovado com sucesso');
+
+      return this.success(reply, result, 200);
+    } catch (error: unknown) {
+      console.error('[AuthController] Erro na autenticação:', error);
+
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid token')) {
+          return this.error(reply, 'Token do Google inválido', 401);
+        }
+      }
+
+      throw error;
+    }
+  }
 }
