@@ -130,4 +130,42 @@ export class UserController extends BaseController {
       throw error;
     }
   }
+  async getSearchHistory(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      if (!request.user) {
+        return this.error(reply, 'Usuário não autenticado', 401);
+      }
+
+      const userId = request.user.id;
+      const { limit = 10, offset = 0 } = request.query as {
+        limit?: number;
+        offset?: number;
+      };
+
+      console.log(`[UserController] Buscando histórico: ${userId}`);
+
+      const { useCases } = request.app;
+      const result = await useCases.getUserSearchHistory.execute({
+        userId,
+        limit: Number(limit),
+        daysThreshold: Number(offset),
+      });
+
+      return this.success(reply, result);
+    } catch (error: unknown) {
+      console.error('❌ [UserController] Erro ao buscar histórico:', error);
+
+      if (error instanceof z.ZodError) {
+        const messages = error.issues.map((err) => err.message).join(', ');
+        return this.error(reply, messages, 400);
+      }
+
+      if (error instanceof Error) {
+        if (error.message.includes('not found'))
+          return this.error(reply, 'Usuário não encontrado', 404);
+      }
+
+      throw error;
+    }
+  }
 }
