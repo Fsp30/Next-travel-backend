@@ -73,4 +73,20 @@ export class SearchController extends BaseController {
       throw error;
     }
   }
+  async getPopularDestinations(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      console.log('[SearchController] Buscando cidades populares');
+
+      const { useCases } = request.app;
+
+      const result = await useCases.getPopularCities.execute({
+        limit: 10,
+      });
+
+      return this.success(reply, result);
+    } catch (error) {
+      console.error('[SearchController] Erro ao buscar populares:', error);
+      throw error;
+    }
+  }
 }
