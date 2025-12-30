@@ -26,7 +26,7 @@ export abstract class BaseController {
     reply: FastifyReply,
     message: string,
     statusCode: number = 400,
-    details?: Record<string, string | number | boolean> 
+    details?: Record<string, string | number | boolean>
   ) {
     return reply.status(statusCode).send({
       success: false,
