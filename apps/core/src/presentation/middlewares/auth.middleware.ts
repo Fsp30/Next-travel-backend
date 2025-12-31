@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { verify } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 interface JWTPayload {
   userId: string;
@@ -38,7 +38,7 @@ export async function authMiddleware(
       throw new Error('JWT_ACCESS_SECRET não configurada');
     }
 
-    const decoded = verify(token, secret) as JWTPayload;
+    const decoded = jwt.verify(token, secret) as JWTPayload;
 
     request.user = {
       id: decoded.userId,
