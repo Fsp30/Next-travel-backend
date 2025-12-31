@@ -6,4 +6,6 @@ build
 *.log
 .DS_Store
 coverage
-apps/generated
+generated
+
+/generated/prisma
