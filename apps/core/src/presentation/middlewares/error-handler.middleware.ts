@@ -1,15 +1,16 @@
-import { FastifyError, FastifyReply } from 'fastify';
+import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { ZodError } from 'zod';
 
 export async function errorHandlerMiddleware(
   error: FastifyError,
+  request: FastifyRequest,
   reply: FastifyReply
 ) {
   console.error('Handler Error', {
     message: error.message,
     stack: error.stack,
     statusCode: error.statusCode,
-    cause: error.cause,
+    name: error.name,
   });
 
   if (error instanceof ZodError) {
@@ -19,6 +20,7 @@ export async function errorHandlerMiddleware(
       details: error.issues.map((err) => ({
         field: err.path.join('.'),
         message: err.message,
+        err: request,
       })),
     });
   }
@@ -31,7 +33,7 @@ export async function errorHandlerMiddleware(
     ConflictError: 409,
   };
 
-  const statusCode = statusCodeMap[error.name] || error.statusCode || 500;
+  const statusCode = statusCodeMap[error.name] ?? error.statusCode ?? 500;
 
   return reply.status(statusCode).send({
     success: false,
