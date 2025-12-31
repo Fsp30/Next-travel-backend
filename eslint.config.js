@@ -11,15 +11,15 @@ export default [
       'build/**',
       'coverage/**',
       '*.config.js',
-      'apps/prisma/**',
-      'apps/generated/**',
+      'prisma/**',
+      'generated/**',
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   prettierConfig,
   {
-    files: ['**/*.ts'],
+    files: ['apps/**/*.ts'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
