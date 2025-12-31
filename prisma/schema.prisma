@@ -1,0 +1,143 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  name           String
+  googleId       String    @unique @map("google_id")
+  profilePicture String?   @map("profile_picture")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  lastLogin      DateTime? @map("last_login")
+
+  // Relações
+  searchHistory   SearchHistory[]
+  affiliateClicks AffiliateClick[]
+
+  @@index([email])
+  @@index([googleId])
+  @@map("users")
+}
+
+model City {
+  id           String   @id @default(uuid())
+  name         String
+  state        String
+  country      String   @default("Brasil")
+  slug         String   @unique
+  latitude     Decimal? @db.Decimal(10, 8)
+  longitude    Decimal? @db.Decimal(11, 8)
+  requestCount Int      @default(0) @map("request_count")
+  isPopular    Boolean  @default(false) @map("is_popular")
+  lastUpdated  DateTime @default(now()) @map("last_updated")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  searchHistory   SearchHistory[]
+  cityCosts       CityCost?
+  affiliateClicks AffiliateClick[]
+  apiUsageLogs    ApiUsageLog[]
+
+  @@index([slug])
+  @@index([requestCount(sort: Desc)])
+  @@index([country, state])
+  @@map("cities")
+}
+
+model SearchHistory {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  cityId          String    @map("city_id")
+  travelStartDate DateTime? @map("travel_start_date") @db.Date
+  travelEndDate   DateTime? @map("travel_end_date") @db.Date
+  searchDate      DateTime  @default(now()) @map("search_date")
+  ipAddress       String?   @map("ip_address")
+  userAgent       String?   @map("user_agent")
+
+  // Relações
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([cityId])
+  @@index([searchDate(sort: Desc)])
+  @@map("search_history")
+}
+
+model CityCost {
+  id                     String   @id @default(uuid())
+  cityId                 String   @unique @map("city_id")
+  transportBusMin        Decimal? @map("transport_bus_min") @db.Decimal(10, 2)
+  transportBusMax        Decimal? @map("transport_bus_max") @db.Decimal(10, 2)
+  transportFlightMin     Decimal? @map("transport_flight_min") @db.Decimal(10, 2)
+  transportFlightMax     Decimal? @map("transport_flight_max") @db.Decimal(10, 2)
+  accommodationBudgetMin Decimal? @map("accommodation_budget_min") @db.Decimal(10, 2)
+  accommodationBudgetMax Decimal? @map("accommodation_budget_max") @db.Decimal(10, 2)
+  accommodationMidMin    Decimal? @map("accommodation_mid_min") @db.Decimal(10, 2)
+  accommodationMidMax    Decimal? @map("accommodation_mid_max") @db.Decimal(10, 2)
+  accommodationLuxuryMin Decimal? @map("accommodation_luxury_min") @db.Decimal(10, 2)
+  accommodationLuxuryMax Decimal? @map("accommodation_luxury_max") @db.Decimal(10, 2)
+  foodBudgetDaily        Decimal? @map("food_budget_daily") @db.Decimal(10, 2)
+  foodMidDaily           Decimal? @map("food_mid_daily") @db.Decimal(10, 2)
+  currency               String   @default("BRL") @db.VarChar(3)
+  lastUpdated            DateTime @default(now()) @map("last_updated")
+  source                 String?
+  notes                  String?
+
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([cityId])
+  @@map("city_costs")
+}
+
+model AffiliateClick {
+  id               String    @id @default(uuid())
+  userId           String?   @map("user_id")
+  cityId           String    @map("city_id")
+  partner          String    @db.VarChar(100)
+  partnerUrl       String    @map("partner_url")
+  clickedAt        DateTime  @default(now()) @map("clicked_at")
+  converted        Boolean   @default(false)
+  conversionDate   DateTime? @map("conversion_date")
+  conversionValue  Decimal?  @map("conversion_value") @db.Decimal(10, 2)
+  commissionEarned Decimal?  @map("commission_earned") @db.Decimal(10, 2)
+  sessionId        String?   @map("session_id")
+  referrer         String?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  city City  @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([cityId])
+  @@index([partner])
+  @@index([converted])
+  @@index([clickedAt(sort: Desc)])
+  @@map("affiliate_clicks")
+}
+
+model ApiUsageLog {
+  id             String   @id @default(uuid())
+  apiName        String   @map("api_name") @db.VarChar(100)
+  endpoint       String?  @db.VarChar(255)
+  requestCost    Decimal? @map("request_cost") @db.Decimal(10, 6)
+  tokensUsed     Int?     @map("tokens_used")
+  responseTimeMs Int?     @map("response_time_ms")
+  success        Boolean  @default(true)
+  errorMessage   String?  @map("error_message")
+  createdAt      DateTime @default(now()) @map("created_at")
+  cityId         String?  @map("city_id")
+
+  // Relações
+  city City? @relation(fields: [cityId], references: [id], onDelete: SetNull)
+
+  @@index([apiName])
+  @@index([createdAt(sort: Desc)])
+  @@map("api_usage_logs")
+}
