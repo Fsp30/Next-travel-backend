@@ -1,7 +1,7 @@
 import { User } from '@/core/src/domain/entities/User';
 import { UserId } from '@/core/src/domain/value-objects';
 import { IUserRepository } from '@/core/src/interfaces';
-import { PrismaClient } from '@generated/prisma';
+import { PrismaClient } from '@generated/prisma/client';
 import { PrismaUserDTO, PrismaUserMapper } from '../dtos/user-prisma.dto';
 
 export class UserRepository implements IUserRepository {
