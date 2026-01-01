@@ -12,6 +12,9 @@ export {
   buildTravelGuidePrompt,
   type ChatMessage,
 } from './prompts';
-export { GenerateTravelGuideInput, GenerateTravelGuideOutput } from './types';
-export { ILLMService } from './interfaces/llm.service.inteface';
+export type {
+  GenerateTravelGuideInput,
+  GenerateTravelGuideOutput,
+} from './types';
+export type { ILLMService } from './interfaces/llm.service.inteface';
 export { OpenAILLMService } from './services';
