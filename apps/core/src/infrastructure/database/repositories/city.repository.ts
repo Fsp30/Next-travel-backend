@@ -122,26 +122,23 @@ export class CityRepository implements ICityRepository {
     }
   }
 
-  async findPopularCitties(limit?: number): Promise<City[] | null> {
+  async findPopularCities(limit = 20): Promise<City[]> {
     try {
       const cities = await this.prisma.city.findMany({
-        take: limit || 20,
-        skip: 0,
+        take: limit,
         where: {
           requestCount: {
             gt: this.POPULAR_CITY_THRESHOLD,
           },
         },
+        orderBy: {
+          requestCount: 'desc',
+        },
       });
-
-      if (!cities) {
-        console.log('There is no record of popular cities.');
-        return null;
-      }
 
       return cities.map((city) => PrismaCityMapper.toDomain(city));
     } catch (error) {
-      console.log('Error finding popular cities: ', error);
+      console.error('Error finding popular cities:', error);
       throw new Error('Falha ao buscar cidades populares');
     }
   }

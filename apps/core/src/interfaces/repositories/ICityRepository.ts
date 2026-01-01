@@ -31,7 +31,7 @@ export interface ICityRepository {
     coordinates: Coordinates
   ): Promise<void>;
 
-  findPopularCitties(limit?: number): Promise<City[] | null>;
+  findPopularCities(limit?: number): Promise<City[]>;
   findMany(options: ICitiesQueriesProps): Promise<City[] | null>;
 
   delete(city: City): Promise<void>;

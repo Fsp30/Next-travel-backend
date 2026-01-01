@@ -19,6 +19,11 @@ import {
   RefreshTokenFactory,
   SearchDestinationFactory,
 } from './use-cases';
+import { GetUserFactory } from './use-cases/user/get-user.factory';
+import { UpdateUserFactory } from './use-cases/user/update-user.factory';
+import { DeleteUserFactory } from './use-cases/user/delete-user.factory';
+import { CreateUserFactory } from './use-cases/user/create-user.factory';
+import { GetPopularCitiesFactory } from './use-cases/city';
 
 export class AppFactory {
   private static instance: ReturnType<typeof AppFactory.create> | null = null;
@@ -29,7 +34,7 @@ export class AppFactory {
     const repositories = {
       cache: CacheRepositoryFactory.create(redis),
       user: UserRepositoryFactory.create(prisma),
-      city: CityRepositoryFactory.creata(prisma),
+      city: CityRepositoryFactory.create(prisma),
       searchHistory: SearchHistoryRepositoryFactory.create(prisma),
     };
 
@@ -38,24 +43,31 @@ export class AppFactory {
       auth: AuthServiceFactory.create(repositories.user),
 
       wikipedia: WikipediaServiceFactory.create(),
-      weaather: WeatherServiceFactory.create(),
+      weather: WeatherServiceFactory.create(),
       costs: CostsServiceFactory.create(),
     };
 
     const useCases = {
+      getUser: GetUserFactory.create(repositories.user),
+      createUser: CreateUserFactory.create(repositories.user),
+      updateUser: UpdateUserFactory.create(repositories.user),
+      deleteUser: DeleteUserFactory.create(repositories.user),
+
       authenticateUser: AuthenticateUserFactory.create(
         repositories.user,
         services.auth
       ),
 
+      getPopularCities: GetPopularCitiesFactory.create(repositories.city),
+
       refreshToken: RefreshTokenFactory.create(services.auth),
 
-      searchdDestination: SearchDestinationFactory.createWithAllDependencies(
+      searchDestination: SearchDestinationFactory.createWithAllDependencies(
         repositories.cache,
         repositories.city,
         repositories.searchHistory,
         services.wikipedia,
-        services.weaather,
+        services.weather,
         services.costs,
         services.llm
       ),
