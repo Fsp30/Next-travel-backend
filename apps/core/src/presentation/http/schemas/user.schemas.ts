@@ -1,4 +1,8 @@
-import { CreateUserDTOSchema, UpdateUserDTOSchema } from '@/core/src/dtos';
+import {
+  CreateUserDTOSchema,
+  GetUserDTOSchema,
+  UpdateUserDTOSchema,
+} from '@/core/src/dtos';
 import { FastifySchema } from '../contracts/types/schema';
 import { commonResponses, securityAuth, successSchema } from './common.schemas';
 import { generateSchema } from '@anatine/zod-openapi';
@@ -9,7 +13,7 @@ export const getUserProfileSchema: FastifySchema = {
   tags: ['User'],
   summary: 'Meu perfil',
   security: securityAuth,
-  body: generateSchema(CreateUserDTOSchema),
+  body: generateSchema(GetUserDTOSchema),
   response: {
     200: {
       description: 'Perfil retornado com sucesso',
@@ -31,6 +35,35 @@ export const getUserProfileSchema: FastifySchema = {
       },
     },
     ...commonResponses,
+  },
+};
+
+export const createUserProfileSchema: FastifySchema = {
+  description: 'Criar perfil do usuário',
+  tags: ['User'],
+  summary: 'Criar user',
+  security: securityAuth,
+  body: generateSchema(CreateUserDTOSchema),
+  response: {
+    201: {
+      description: 'Perfil criado com sucesso',
+      content: {
+        'application/json': {
+          schema: successSchema(generateSchema(UserResponseDTOSchema)),
+          example: {
+            success: true,
+            data: {
+              id: '550e8400-e29b-41d4-a716-446655440000',
+              email: 'user@example.com',
+              name: 'João Silva',
+              profilePicture: 'https://lh3.googleusercontent.com/...',
+              createdAt: '2024-01-15T10:30:00Z',
+              lastLogin: '2024-01-15T10:30:00Z',
+            },
+          },
+        },
+      },
+    },
   },
 };
 
