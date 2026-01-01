@@ -51,13 +51,16 @@ export class AuthController extends BaseController {
     }
   }
 
-  async logout(reply: FastifyReply) {
+  async logout(request: FastifyRequest, reply: FastifyReply) {
     try {
       console.log('[AuthController] Logout realizado');
 
       return this.success(reply, { message: 'Logout feito com sucesso' });
     } catch (error) {
-      console.error('[AuthController] Erro ao tentar desconectar:', error);
+      console.error(
+        `[AuthController] Erro ao tentar desconectar {user: ${request.user?.id}}:`,
+        error
+      );
       throw error;
     }
   }
