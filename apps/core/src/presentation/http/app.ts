@@ -9,6 +9,7 @@ import {
 } from '../middlewares';
 import Fastify, { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@generated/prisma/client';
+import { registerRoutes } from './routes';
 
 export async function createApp(
   prisma: PrismaClient,
@@ -55,11 +56,15 @@ export async function createApp(
 
   console.log('[App] Registrando rotas...');
 
-  fastify.get('/', async () => ({
-    message: 'Next Travel API',
-    version: '1.0.0',
-    docs: '/docs',
-  }));
+  await registerRoutes(fastify); 
+  
+  fastify.get('/', async () => {
+    return {
+      message: 'Next Travel API',
+      version: '1.0.0',
+      docs: '/docs',
+    };
+  });
 
   return fastify;
 }
