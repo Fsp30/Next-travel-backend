@@ -1,4 +1,7 @@
 import { FastifyInstance } from 'fastify';
+import scalar from '@scalar/fastify-api-reference';
+import Swagger from '@fastify/swagger';
+import SwaggerUI from '@fastify/swagger-ui';
 
 export const openaiConfig = {
   openapi: {
@@ -7,7 +10,6 @@ export const openaiConfig = {
       title: 'Travel Planner API',
       description: `
 ## API para planejamento de viagens com informações sobre destinos brasileiros.
-
 
 - Autenticação via Google OAuth
 - Busca de destinos com cache inteligente
@@ -34,6 +36,7 @@ A maioria dos endpoints requer autenticação JWT.
         url: 'https://opensource.org/licenses/MIT',
       },
     },
+    paths: {},
     servers: [
       {
         url: 'http://localhost:8080',
@@ -57,16 +60,12 @@ A maioria dos endpoints requer autenticação JWT.
         name: 'Search',
         description: 'Busca de destinos e informações',
       },
-      {
-        name: 'Health',
-        description: 'Status da API e dependências',
-      },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
+          type: 'http' as const,
+          scheme: 'bearer' as const,
           bearerFormat: 'JWT',
           description: 'JWT token obtido via login',
         },
@@ -87,24 +86,29 @@ export const scalarConfig = {
     authentication: {
       preferredSecurityScheme: 'bearerAuth',
     },
-    spec: {
-      url: '/docs/json',
-    },
   },
 };
 
 export async function registerScalar(fastify: FastifyInstance) {
-  const scalarPlugin = await import('@scalar/fastify-api-reference');
+  await fastify.register(Swagger, {
+    openapi: openaiConfig.openapi,
+  });
 
-  await fastify.register(scalarPlugin.default, {
+  await fastify.register(SwaggerUI, {
+    routePrefix: '/swagger',
+  });
+
+  await fastify.register(scalar, {
     routePrefix: '/docs',
     configuration: {
       theme: 'purple',
+      layout: 'modern',
       spec: {
-        content: openaiConfig.openapi,
+        url: '/swagger/json',
       },
     },
   });
 
-  console.log('📚 [Docs] Scalar disponível em: http://localhost:8080/docs');
+  console.log('[Docs] Scalar disponível em: /docs');
+  console.log('[Docs] Swagger UI disponível em: /swagger');
 }

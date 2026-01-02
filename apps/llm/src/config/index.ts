@@ -3,5 +3,6 @@ export {
   ModelCosts,
   validateLLMConfig,
   PromptConfigs,
-  LLMConfigType,
 } from './llm.config';
+
+export type { LLMConfigType } from './llm.config';

@@ -1,2 +1,2 @@
-export { GenerateTravelGuideInput } from './llm-input.types';
-export { GenerateTravelGuideOutput } from './llm-output.types';
+export type { GenerateTravelGuideInput } from './llm-input.types';
+export type { GenerateTravelGuideOutput } from './llm-output.types';

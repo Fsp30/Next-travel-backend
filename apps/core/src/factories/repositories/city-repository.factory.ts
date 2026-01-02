@@ -1,4 +1,4 @@
-import { PrismaClient } from '@generated/prisma';
+import { PrismaClient } from '@generated/prisma/client';
 import { ICityRepository } from '../../interfaces';
 import { CityRepository } from '../../infrastructure/database/repositories/city.repository';
 

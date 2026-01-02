@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "node",
-    "lib": ["ES2022"],
+    "lib": ["ES2023"],
     "outDir": "./dist",
-    "rootDir": "./apps",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -14,17 +14,18 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "verbatimModuleSyntax": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "apps",
+    "baseUrl": ".", 
     "paths": {
       "@generated/*": ["generated/*"],
-      "@/*": ["*"]
+      "@/*": ["apps/*"]
     }
   },
-  "include": ["apps/**/*"],
+  "include": ["apps/**/*", "generated/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
 }

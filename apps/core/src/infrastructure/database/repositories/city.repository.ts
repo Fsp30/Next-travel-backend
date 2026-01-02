@@ -1,7 +1,7 @@
 import { City } from '@/core/src/domain/entities/City';
 import { CityId, Coordinates } from '@/core/src/domain/value-objects';
 import { ICitiesQueriesProps, ICityRepository } from '@/core/src/interfaces';
-import { PrismaClient } from '@generated/prisma';
+import { PrismaClient } from '@generated/prisma/client';
 import { PrismaCityMapper } from '../dtos/city-prisma.dto';
 
 export class CityRepository implements ICityRepository {

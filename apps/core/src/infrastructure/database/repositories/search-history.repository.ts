@@ -3,7 +3,7 @@ import {
   FindSearchHistoryOptions,
   ISearchHistoryRepostitory,
 } from '@/core/src/interfaces';
-import { PrismaClient } from '@generated/prisma';
+import { PrismaClient } from '@generated/prisma/client';
 import { PrismaSearchHistoryMapper } from '../dtos/search-history-prisma.dto';
 import { CityId, UserId } from '@/core/src/domain/value-objects';
 
