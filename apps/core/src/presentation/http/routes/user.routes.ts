@@ -1,8 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import { UserController } from '../controllers';
-import { UpdateUserDTOSchema } from '@/core/src/dtos';
+import { CreateUserDTOSchema, UpdateUserDTOSchema } from '@/core/src/dtos';
 import { authMiddleware, validationMiddleware } from '../../middlewares';
 import {
+  createUserProfileSchema,
   deleteUserAccountSchema,
   getUserHistorySchema,
   getUserProfileSchema,
@@ -19,6 +20,15 @@ export async function userRoutes(fastify: FastifyInstance) {
       preHandler: [authMiddleware],
     },
     controller.getProfile.bind(controller)
+  );
+
+  fastify.post(
+    '/me',
+    {
+      schema: createUserProfileSchema,
+      preHandler: [validationMiddleware(CreateUserDTOSchema, 'body')],
+    },
+    controller.createProfile.bind(controller)
   );
 
   fastify.put(

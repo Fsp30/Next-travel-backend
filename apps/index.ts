@@ -10,7 +10,6 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 async function start() {
   try {
-
     const connectionString = `${process.env.DATABASE_URL}`;
 
     const adapter = new PrismaPg({ connectionString });
@@ -33,54 +32,42 @@ async function start() {
       console.error('❌ [Server] Erro no Redis:', err);
     });
 
-    // Testar conexão Prisma
     await prisma.$connect();
-    console.log('✅ [Server] PostgreSQL conectado');
+    console.log('[Server] PostgreSQL conectado');
 
-    // ═══════════════════════════════════════════════════════════
-    // 2. CRIAR APLICAÇÃO
-    // ═══════════════════════════════════════════════════════════
     const app = await createApp(prisma, redis);
 
-    // ═══════════════════════════════════════════════════════════
-    // 3. INICIAR SERVIDOR
-    // ═══════════════════════════════════════════════════════════
+
     await app.listen({ port: PORT, host: HOST });
 
-    console.log('\n🚀 ════════════════════════════════════════════');
+    console.log('\n');
     console.log(`   Server rodando em: http://localhost:${PORT}`);
     console.log(`   Documentação: http://localhost:${PORT}/docs`);
-    console.log('════════════════════════════════════════════\n');
+    console.log('\n');
 
-    // ═══════════════════════════════════════════════════════════
-    // 4. GRACEFUL SHUTDOWN
-    // ═══════════════════════════════════════════════════════════
+  
     const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
 
     for (const signal of signals) {
       process.on(signal, async () => {
-        console.log(`\n🛑 [Server] Recebido ${signal}, encerrando...`);
+        console.log(`\n[Server] Recebido ${signal}, encerrando...`);
 
-        // Parar de aceitar novas requisições
         await app.close();
-        console.log('✅ [Server] Fastify encerrado');
+        console.log('[Server] Fastify encerrado');
 
-        // Desconectar Prisma
         await prisma.$disconnect();
-        console.log('✅ [Server] Prisma desconectado');
+        console.log('[Server] Prisma desconectado');
 
-        // Desconectar Redis
         redis.disconnect();
-        console.log('✅ [Server] Redis desconectado');
+        console.log('[Server] Redis desconectado');
 
         process.exit(0);
       });
     }
   } catch (error) {
-    console.error('❌ [Server] Erro ao iniciar:', error);
+    console.error('[Server] Erro ao iniciar:', error);
     process.exit(1);
   }
 }
 
-// Iniciar aplicação
 start();

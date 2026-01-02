@@ -1,11 +1,11 @@
 import { generateSchema } from '@anatine/zod-openapi';
 import { AuthenticateUserDTOSchema } from '../../../dtos/requests/auth/AuthenticateUserDTO';
 import { commonResponses, securityAuth, successSchema } from './common.schemas';
-import { FastifySchema } from '../contracts/types/schema';
+import { FastifySchema } from 'fastify';
 
 export const loginGoogleSchema: FastifySchema = {
-  description: 'Autenticação via Google OAuth',
-  tags: ['Auth'],
+  description: 'AutenticaÃ§Ã£o via Google OAuth',
+  tags: ['Auth'] as const,
   summary: 'Login com Google',
   body: generateSchema(AuthenticateUserDTOSchema),
   response: {
@@ -37,12 +37,12 @@ export const loginGoogleSchema: FastifySchema = {
               },
               accessToken: {
                 type: 'string',
-                description: 'JWT token válido por 7 dias',
+                description: 'JWT token vÃ¡lido por 7 dias',
               },
               refreshToken: {
                 type: 'string',
                 description:
-                  'Token para renovar o accessToken (válido por 30 dias)',
+                  'Token para renovar o accessToken (vÃ¡lido por 30 dias)',
               },
             },
           }),
@@ -52,7 +52,7 @@ export const loginGoogleSchema: FastifySchema = {
               user: {
                 id: '550e8400-e29b-41d4-a716-446655440000',
                 email: 'user@example.com',
-                name: 'João Silva',
+                name: 'JoÃ£o Silva',
                 profilePicture: 'https://lh3.googleusercontent.com/...',
                 createdAt: '2024-01-15T10:30:00Z',
                 lastLogin: '2024-01-20T14:22:00Z',
@@ -103,7 +103,7 @@ export const refreshTokenSchema: FastifySchema = {
 
 export const logoutSchema: FastifySchema = {
   description: 'Realizar logout',
-  tags: ['Auth'],
+  tags: ['Auth'] as const,
   summary: 'Logout',
   security: securityAuth,
   response: {

@@ -56,8 +56,8 @@ export async function createApp(
 
   console.log('[App] Registrando rotas...');
 
-  await registerRoutes(fastify); 
-  
+  await registerRoutes(fastify);
+
   fastify.get('/', async () => {
     return {
       message: 'Next Travel API',
