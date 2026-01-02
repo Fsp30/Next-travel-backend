@@ -8,7 +8,7 @@ export const GetUserDTOSchema = z
 
     googleId: z.string().min(1).trim().optional(),
   })
-  .refine((data) => data.id || data.email || data.email, {
+  .refine((data) => data.id || data.email || data.googleId, {
     message: 'Uma forma de identificação deve ser fornecida',
     path: ['id'],
   });
