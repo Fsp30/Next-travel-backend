@@ -37,7 +37,6 @@ async function start() {
 
     const app = await createApp(prisma, redis);
 
-
     await app.listen({ port: PORT, host: HOST });
 
     console.log('\n');
@@ -45,7 +44,6 @@ async function start() {
     console.log(`   Documentação: http://localhost:${PORT}/docs`);
     console.log('\n');
 
-  
     const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
 
     for (const signal of signals) {
