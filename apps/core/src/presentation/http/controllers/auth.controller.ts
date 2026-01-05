@@ -12,13 +12,27 @@ export class AuthController extends BaseController {
 
       const result = await useCases.authenticateUser.execute(dto);
 
-      console.log(`[AuthController] User autenticado: ${request.user?.email}`);
+      if (!result || !result.user || !result.accessToken) {
+        console.error('[AuthController] Resultado inválido:', result);
+
+        return reply.status(401).send({
+          error: 'Falha na autenticação',
+        });
+      }
+
+      console.log(
+        `[AuthController] User autenticado: ${result.user.email}`
+      );
+
+      console.log(result)
 
       return this.success(reply, result, 200);
     } catch (error) {
-      console.error('[AuthController] Erro na autenticação ', error);
+      console.error('[AuthController] Erro na autenticação', error);
 
-      throw error;
+      return reply.status(500).send({
+        error: 'Erro interno na autenticação',
+      });
     }
   }
 
