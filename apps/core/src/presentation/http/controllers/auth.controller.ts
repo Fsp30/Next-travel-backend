@@ -14,25 +14,35 @@ export class AuthController extends BaseController {
 
       if (!result || !result.user || !result.accessToken) {
         console.error('[AuthController] Resultado inválido:', result);
-
-        return reply.status(401).send({
-          error: 'Falha na autenticação',
-        });
+        return this.error(reply, 'Falha na autenticação', 401);
       }
 
-      console.log(
-        `[AuthController] User autenticado: ${result.user.email}`
-      );
+      console.log(`[AuthController] User autenticado: ${result.user.email}`);
 
-      console.log(result)
+      reply
+        .setCookie('access_token', result.accessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: result.expiresIn,
+        })
+        .setCookie('refresh_token', result.refreshToken!, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 7, 
+        });
 
-      return this.success(reply, result, 200);
+      return this.success(reply, {
+        user: result.user,
+        isNewUser: result.isNewUser,
+      }, 200);
+
     } catch (error) {
-      console.error('[AuthController] Erro na autenticação', error);
-
-      return reply.status(500).send({
-        error: 'Erro interno na autenticação',
-      });
+      console.error('[AuthController] Erro na autenticação:', error);
+      return this.error(reply, 'Erro interno na autenticação', 500);
     }
   }
 
@@ -40,42 +50,120 @@ export class AuthController extends BaseController {
     try {
       console.log('🔄 [AuthController] Iniciando refresh de token');
 
-      const { refreshToken } = request.body as { refreshToken: string };
+      const refreshTokenFromCookie = request.cookies.refresh_token;
+
+      const { refreshToken: refreshTokenFromBody } = request.body as { refreshToken?: string };
+      const refreshToken = refreshTokenFromCookie || refreshTokenFromBody;
 
       if (!refreshToken) {
         return this.error(reply, 'Refresh token não fornecido', 400);
       }
 
-      const { useCases } = request.app;
+      const { useCases, services } = request.app;
+      
+
       const result = await useCases.refreshToken.execute({ refreshToken });
+
+      if (!result.accessToken) {
+        return this.error(reply, 'Falha ao renovar token', 401);
+      }
+
+      const tokenPayload = await services.auth.verifyAccessToken(result.accessToken)
+
+      const userResult = await useCases.getUser.execute({ id: tokenPayload.userId });
+      
+      if (!userResult || !userResult.user) {
+        return this.error(reply, 'Usuário não encontrado', 404);
+      }
 
       console.log('[AuthController] Token renovado com sucesso');
 
-      return this.success(reply, result, 200);
+      // Atualizar cookies
+      reply
+        .setCookie('access_token', result.accessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: result.expiresIn || 3600,
+        });
+
+      if (result.refreshToken) {
+        reply.setCookie('refresh_token', result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 7,
+        });
+      }
+
+      return this.success(reply, {
+        message: 'Token atualizado',
+        user: userResult.user,
+      }, 200);
+
     } catch (error: unknown) {
-      console.error('[AuthController] Erro na autenticação:', error);
+      console.error('[AuthController] Erro no refresh:', error);
+
+      reply
+        .clearCookie('access_token')
+        .clearCookie('refresh_token');
 
       if (error instanceof Error) {
-        if (error.message.includes('Invalid token')) {
-          return this.error(reply, 'Token do Google inválido', 401);
+        if (error.message.includes('Invalid') || error.message.includes('expired')) {
+          return this.error(reply, 'Token inválido ou expirado', 401);
         }
       }
+
+      return this.error(reply, 'Erro ao renovar token', 500);
+    }
+  }
+
+  async logout(_: FastifyRequest, reply: FastifyReply) {
+    try {
+      console.log('[AuthController] Logout realizado');
+
+      reply
+        .clearCookie('access_token')
+        .clearCookie('refresh_token');
+
+      return this.success(reply, { 
+        message: 'Logout realizado com sucesso' 
+      }, 200);
+
+    } catch (error) {
+      console.error('[AuthController] Erro no logout:', error);
+      
+      reply
+        .clearCookie('access_token')
+        .clearCookie('refresh_token');
 
       throw error;
     }
   }
 
-  async logout(request: FastifyRequest, reply: FastifyReply) {
+  async getCurrentUser(request: FastifyRequest, reply: FastifyReply) {
     try {
-      console.log('[AuthController] Logout realizado');
+      if (!request.user) {
+        return this.error(reply, 'Não autenticado', 401);
+      }
 
-      return this.success(reply, { message: 'Logout feito com sucesso' });
+      const { useCases } = request.app;
+      
+      const result = await useCases.getUser.execute({ id: request.user.id });
+      
+      if (!result || !result.user) {
+        return this.error(reply, 'Usuário não encontrado', 404);
+      }
+
+      return this.success(reply, {
+        user: result.user,
+      }, 200);
+
     } catch (error) {
-      console.error(
-        `[AuthController] Erro ao tentar desconectar {user: ${request.user?.id}}:`,
-        error
-      );
-      throw error;
+      console.error('[AuthController] Erro ao obter usuário atual:', error);
+      return this.error(reply, 'Erro interno', 500);
     }
   }
 }
