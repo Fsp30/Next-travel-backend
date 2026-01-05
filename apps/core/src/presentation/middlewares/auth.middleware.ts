@@ -13,10 +13,9 @@ export async function authMiddleware(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-
   const publicRoutes = [
     '/auth/google',
-    '/auth/refresh-token', 
+    '/auth/refresh-token',
     '/auth/logout',
     '/docs',
     '/',
@@ -33,12 +32,10 @@ export async function authMiddleware(
   try {
     let token: string | undefined;
 
-  
     if (request.cookies?.access_token) {
       token = request.cookies.access_token;
       console.log('[Auth] Token encontrado no cookie');
-    } 
-    else if (request.headers.authorization) {
+    } else if (request.headers.authorization) {
       const authHeader = request.headers.authorization;
 
       if (!authHeader.startsWith('Bearer ')) {
@@ -60,7 +57,7 @@ export async function authMiddleware(
           error: 'Token de autenticação não fornecido',
         });
       }
-      return; 
+      return;
     }
 
     const secret = process.env.JWT_ACCESS_SECRET;
@@ -73,7 +70,7 @@ export async function authMiddleware(
       const decoded = jwt.verify(token, secret) as JWTPayload;
 
       const id = decoded.userId;
-      
+
       if (!id) {
         return reply.status(401).send({
           success: false,
@@ -84,7 +81,7 @@ export async function authMiddleware(
 
       const { useCases } = request.app;
       const userResult = await useCases.getUser.execute({ id });
-      
+
       if (!userResult || !userResult.user) {
         return reply.status(401).send({
           success: false,
@@ -98,14 +95,15 @@ export async function authMiddleware(
         email: userResult.user.email,
       };
 
-      console.log(`[Auth] Usuário autenticado: ${userResult.user.email} (ID: ${userResult.user.id})`);
-
+      console.log(
+        `[Auth] Usuário autenticado: ${userResult.user.email} (ID: ${userResult.user.id})`
+      );
     } catch (jwtError) {
       if (jwtError instanceof jwt.TokenExpiredError) {
         console.log('[Auth] Token expirado, tentando renovar...');
-        
+
         const refreshResult = await attemptTokenRefresh(request, reply);
-        
+
         if (!refreshResult) {
           return reply.status(401).send({
             success: false,
@@ -113,14 +111,13 @@ export async function authMiddleware(
             code: 'SESSION_EXPIRED',
           });
         }
-        
-        return; 
+
+        return;
       }
-    
+
       console.error('[Auth] Erro JWT:', jwtError);
       throw jwtError;
     }
-
   } catch (error) {
     console.error('[Auth] Erro na validação do token:', error);
 
@@ -139,32 +136,38 @@ export async function authMiddleware(
   }
 }
 
-
-async function attemptTokenRefresh(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
+async function attemptTokenRefresh(
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<boolean> {
   try {
     const refreshToken = request.cookies?.refresh_token;
-    
+
     if (!refreshToken) {
       console.log('[Auth] Nenhum refresh token disponível');
       return false;
     }
 
     console.log('[Auth] Tentando renovar token com refresh token...');
-    
+
     const { useCases, services } = request.app;
-    
+
     try {
       const result = await useCases.refreshToken.execute({ refreshToken });
-      
+
       if (!result.accessToken) {
         console.error('[Auth] Nenhum access token retornado do refresh');
         return false;
       }
 
-      const tokenPayload = await services.auth.verifyAccessToken(result.accessToken)
+      const tokenPayload = await services.auth.verifyAccessToken(
+        result.accessToken
+      );
 
-      const userResult = await useCases.getUser.execute({ id: tokenPayload.userId });
-      
+      const userResult = await useCases.getUser.execute({
+        id: tokenPayload.userId,
+      });
+
       if (!userResult || !userResult.user) {
         console.error('[Auth] Usuário não encontrado após refresh');
         return false;
@@ -196,22 +199,19 @@ async function attemptTokenRefresh(request: FastifyRequest, reply: FastifyReply)
       };
 
       return true;
-
     } catch (refreshError) {
       console.error('[Auth] Erro ao renovar token:', refreshError);
-      
-      if (refreshError instanceof Error && 
-          (refreshError.message.includes('Invalid') || 
-           refreshError.message.includes('expired'))) {
-        
-        reply
-          .clearCookie('access_token')
-          .clearCookie('refresh_token');
+
+      if (
+        refreshError instanceof Error &&
+        (refreshError.message.includes('Invalid') ||
+          refreshError.message.includes('expired'))
+      ) {
+        reply.clearCookie('access_token').clearCookie('refresh_token');
       }
-      
+
       return false;
     }
-
   } catch (error) {
     console.error('[Auth] Erro ao tentar renovar token:', error);
     return false;
@@ -233,23 +233,30 @@ export async function optionalAuthMiddleware(
 
     if (token && process.env.JWT_ACCESS_SECRET) {
       try {
-        const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET) as JWTPayload;
+        const decoded = jwt.verify(
+          token,
+          process.env.JWT_ACCESS_SECRET
+        ) as JWTPayload;
 
         const { useCases } = request.app;
-        const userResult = await useCases.getUser.execute({ id: decoded.userId });
-        
+        const userResult = await useCases.getUser.execute({
+          id: decoded.userId,
+        });
+
         if (userResult && userResult.user) {
           request.user = {
             id: userResult.user.id,
             email: userResult.user.email,
           };
-          console.log(`[OptionalAuth] Usuário autenticado: ${userResult.user.email}`);
+          console.log(
+            `[OptionalAuth] Usuário autenticado: ${userResult.user.email}`
+          );
         }
-      } catch (error) {
+      } catch {
         request.user = undefined;
       }
     }
-  } catch (error) {
+  } catch {
     request.user = undefined;
   }
 }

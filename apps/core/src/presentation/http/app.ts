@@ -22,13 +22,13 @@ export async function createApp(
       transport:
         process.env.NODE_ENV === 'development'
           ? {
-            target: 'pino-pretty',
-            options: {
-              translateTime: 'HH:MM:ss Z',
-              ignore: 'pid,hostname',
-              colorize: true,
-            },
-          }
+              target: 'pino-pretty',
+              options: {
+                translateTime: 'HH:MM:ss Z',
+                ignore: 'pid,hostname',
+                colorize: true,
+              },
+            }
           : undefined,
     },
     disableRequestLogging: true,
@@ -52,12 +52,11 @@ export async function createApp(
 
   await fastify.register(fastifyCookie, {
     secret: process.env.COOKIE_SECRET || 'my-secret-key',
-    parseOptions: {}
+    parseOptions: {},
   });
 
-
   await fastify.register(import('@fastify/cors'), {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000', 
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
