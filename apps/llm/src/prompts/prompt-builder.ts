@@ -1,5 +1,8 @@
 import { GenerateTravelGuideInput } from '../types';
-import { generateSystemPrompt, generateUserPrompt } from './guide-generator.propmt';
+import {
+  generateSystemPrompt,
+  generateUserPrompt,
+} from './guide-generator.propmt';
 
 export interface GeminiMessage {
   role: 'user' | 'model';
