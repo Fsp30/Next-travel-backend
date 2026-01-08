@@ -3,7 +3,7 @@ export {
   generateUserPrompt,
 } from './guide-generator.propmt';
 export {
-  type ChatMessage,
+  type GeminiMessage,
   buildTravelGuidePrompt,
-  PrompBuilder,
+  PromptBuilder,
 } from './prompt-builder';

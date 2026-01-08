@@ -9,6 +9,11 @@ export interface GeminiMessage {
   parts: { text: string }[];
 }
 
+export interface GeminiPromptPayload {
+  systemInstruction: string;
+  contents: GeminiMessage[];
+}
+
 export class PromptBuilder {
   private messages: GeminiMessage[] = [];
   private systemInstruction: string = '';
@@ -26,10 +31,22 @@ export class PromptBuilder {
     return this;
   }
 
-  build() {
+  build(): GeminiPromptPayload {
+    if (this.messages.length === 0) {
+      throw new Error('[PromptBuilder] Nenhuma mensagem adicionada');
+    }
     return {
       systemInstruction: this.systemInstruction,
-      contents: this.messages,
+      contents: [...this.messages],
     };
   }
+}
+
+export function buildTravelGuidePrompt(
+  input: GenerateTravelGuideInput
+): GeminiPromptPayload {
+  return new PromptBuilder()
+    .withSystemPrompt()
+    .withTravelGuideRequest(input)
+    .build();
 }
