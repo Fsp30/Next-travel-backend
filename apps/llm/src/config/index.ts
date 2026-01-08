@@ -1,8 +1,1 @@
-export {
-  LLMConfig,
-  ModelCosts,
-  validateLLMConfig,
-  PromptConfigs,
-} from './llm.config';
-
-export type { LLMConfigType } from './llm.config';
+export { LLMConfig, ModelCosts } from './llm.config';
