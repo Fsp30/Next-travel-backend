@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const LLMConfig = {
-  provider: process.env.LLM_PROVIDER || 'groq', 
+  provider: process.env.LLM_PROVIDER || 'groq',
   model: process.env.LLM_MODEL || 'llama-3.1-8b-instant',
   apiKey: process.env.LLM_API_KEY || '',
   timeout: parseFloat(process.env.LLM_TIMEOUT || '3000'),
@@ -19,8 +19,7 @@ export const LLMConfig = {
 };
 
 export const ModelCosts = {
-  'llama-3.1-8b-instant': { input: 0, output: 0 }, 
-  'mixtral-8x7b-32768': { input: 0, output: 0 }, 
+  'llama-3.1-8b-instant': { input: 0, output: 0 },
+  'mixtral-8x7b-32768': { input: 0, output: 0 },
   'gemma2-9b-it': { input: 0, output: 0 },
-
 };
