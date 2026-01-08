@@ -17,4 +17,4 @@ export type {
   GenerateTravelGuideOutput,
 } from './types';
 export type { ILLMService } from './interfaces/llm.service.inteface';
-export { OpenAILLMService } from './services';
+export { LLMService } from './services';

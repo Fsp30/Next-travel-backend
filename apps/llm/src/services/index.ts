@@ -1,1 +1,1 @@
-export { OpenAILLMService } from './llm.service';
+export { LLMService } from './llm.service';

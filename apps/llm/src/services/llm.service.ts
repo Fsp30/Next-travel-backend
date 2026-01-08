@@ -4,7 +4,7 @@ import { LLMConfig, ModelCosts } from '../config';
 import { PromptBuilder } from '../prompts/prompt-builder';
 import { ILLMService } from '../interfaces/llm.service.inteface';
 
-export class GeminiLLMService implements ILLMService {
+export class LLMService implements ILLMService {
   private genAI: GoogleGenerativeAI;
 
   constructor() {
