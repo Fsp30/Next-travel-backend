@@ -32,8 +32,6 @@ export class OpenAILLMService implements ILLMService {
         temperature: LLMConfig.temperature,
         max_tokens: LLMConfig.maxTokens,
         top_p: LLMConfig.topP,
-        frequency_penalty: LLMConfig.frequencyPenalty,
-        presence_penalty: LLMConfig.presencePenalty,
       });
 
       const text = response.choices[0]?.message?.content || '';
