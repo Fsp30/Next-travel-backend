@@ -3,7 +3,8 @@ import {
   WikipediaPageInfoDTO,
   WikipediaPageInfoSchema,
 } from '../../../dtos/responses/external-services/wikipedia/WikipediaPageInfoDTO';
-import { WikipediaBaseService } from './wikipedia-base.service';
+import { BaseService } from '../../shared';
+import { WikipediaActionClient } from './action/wikipedia-action.client';
 
 export interface WikipediaCityInfoInput {
   cityName: string;
@@ -39,10 +40,16 @@ interface WikipediaCityInfoAPIResponse {
   };
 }
 
-export class WikipediaCityInfoService extends WikipediaBaseService<
+export class WikipediaCityInfoService extends BaseService<
   WikipediaCityInfoInput,
   WikipediaCityInfoOutput
 > {
+  private readonly actionClient: WikipediaActionClient;
+
+  constructor() {
+    super();
+    this.actionClient = new WikipediaActionClient();
+  }
   async execute(
     input: WikipediaCityInfoInput
   ): Promise<WikipediaCityInfoOutput> {
@@ -82,44 +89,22 @@ export class WikipediaCityInfoService extends WikipediaBaseService<
     return parts.join(', ');
   }
 
-  private async fetchCityInfo(
-    pageTitle: string
-  ): Promise<WikipediaCityInfoAPIResponse | null> {
+  private async fetchCityInfo(pageTitle: string) {
     try {
-      const response = await this.http.get<WikipediaCityInfoAPIResponse>(
-        '/page/summary',
-        {
-          titles: pageTitle,
-          prop: 'extracts|pageimages|coordinates|categories|info',
-          exintro: true,
-          explaintext: true,
-          piprop: 'thumbnail',
-          pithumbsize: 500,
-          inprop: 'url',
-          redirects: 1,
-        }
-      );
-
-      const pages = response?.query?.pages;
-      if (!pages) {
-        return null;
-      }
-
-      const pageId = Object.keys(pages)[0];
-      if (pageId === '-1' || !pages[pageId]) {
-        console.warn(
-          `[WikipediaCityInfoService] Página não encontrada: ${pageTitle}`
-        );
-        return null;
-      }
-
+      const response = await this.actionClient.query({
+        titles: pageTitle,
+        prop: 'extracts|pageimages|coordinates|categories|info',
+        exintro: true,
+        explaintext: true,
+        piprop: 'thumbnail',
+        pithumbsize: 500,
+        inprop: 'url',
+        redirects: 1,
+      });
       return response;
     } catch (error) {
-      console.error(
-        '[WikipediaCityInfoService] Erro ao buscar informações da cidade:',
-        error
-      );
-      throw new Error('Falha ao buscar informações da cidade na Wikipedia');
+      console.error('Erro:', error);
+      return null;
     }
   }
 

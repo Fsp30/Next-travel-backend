@@ -1,20 +1,14 @@
-export {
-  LLMConfig,
-  type LLMConfigType,
-  ModelCosts,
-  PromptConfigs,
-  validateLLMConfig,
-} from './config';
+export { LLMConfig, ModelCosts } from './config';
 export {
   generateSystemPrompt,
   generateUserPrompt,
-  PrompBuilder,
+  PromptBuilder,
   buildTravelGuidePrompt,
-  type ChatMessage,
+  type GeminiMessage,
 } from './prompts';
 export type {
   GenerateTravelGuideInput,
   GenerateTravelGuideOutput,
 } from './types';
 export type { ILLMService } from './interfaces/llm.service.inteface';
-export { OpenAILLMService } from './services';
+export { LLMService } from './services';
