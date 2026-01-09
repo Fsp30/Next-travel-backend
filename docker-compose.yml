@@ -1,9 +1,24 @@
+version: "3.9"
+
 services:
+  api:
+    build: .
+    container_name: next-travel-api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
-    container_name: redis-test
-    ports:
-      - "6379:6379"
+    container_name: redis
     command: redis-server --appendonly yes --requirepass redis123
     volumes:
       - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  redis-data:
