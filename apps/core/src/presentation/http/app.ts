@@ -31,6 +31,7 @@ export async function createApp(
             }
           : undefined,
     },
+    trustProxy: true,
     disableRequestLogging: true,
   });
 
@@ -42,7 +43,6 @@ export async function createApp(
   registerRequestLogger(fastify);
 
   fastify.addHook('onRequest', injectDependenciesMiddleware);
-
   fastify.addHook('onRequest', rateLimitMiddleware);
 
   fastify.setErrorHandler(errorHandlerMiddleware);
@@ -51,28 +51,38 @@ export async function createApp(
   await registerScalar(fastify);
 
   await fastify.register(fastifyCookie, {
-    secret: process.env.COOKIE_SECRET || 'my-secret-key',
-    parseOptions: {},
+    secret: process.env.COOKIE_SECRET!,
+    hook: 'onRequest',
+    parseOptions: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    },
   });
 
   await fastify.register(import('@fastify/cors'), {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? process.env.CORS_ORIGIN?.split(',') ?? true
+        : 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   console.log('[App] Registrando rotas...');
-
   await registerRoutes(fastify);
 
-  fastify.get('/', async () => {
-    return {
-      message: 'Next Travel API',
-      version: '1.0.0',
-      docs: '/docs',
-    };
-  });
+  fastify.get('/health', async () => ({
+    status: 'ok',
+    uptime: process.uptime(),
+  }));
+
+  fastify.get('/', async () => ({
+    message: 'Next Travel API',
+    version: '1.0.0',
+    docs: '/docs',
+  }));
 
   return fastify;
 }
