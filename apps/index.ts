@@ -17,15 +17,17 @@ async function start() {
     const prisma = new PrismaClient({ adapter });
 
     console.log('[Server] Conectando ao Redis...');
-    if (!process.env.REDIS_URL) {
-      throw new Error('REDIS_URL não definida');
-    }
+    const redisUrl =
+      process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
-    const redis = new Redis(process.env.REDIS_URL, {
+    console.log('[Server] Conectando ao Redis...');
+
+    const redis = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
       enableReadyCheck: true,
       retryStrategy: (times) => Math.min(times * 100, 2000),
     });
+
 
     redis.on('connect', () => {
       console.log('✅ [Server] Redis conectado');

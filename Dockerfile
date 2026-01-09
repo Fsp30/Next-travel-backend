@@ -1,34 +1,27 @@
+FROM node:20-alpine
 
-FROM node:20-alpine AS base
+RUN apk add --no-cache redis supervisor
 
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-FROM base AS deps
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-FROM base AS build
-
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN pnpm prisma generate
-
 RUN pnpm build
 
-FROM node:20-alpine AS runner
 
-WORKDIR /app
+COPY supervisord.conf /etc/supervisord.conf
+
 ENV NODE_ENV=production
+ENV PORT=8080
+ENV REDIS_URL=redis://127.0.0.1:6379
 
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/prisma ./prisma
+EXPOSE 8080 6379
 
-EXPOSE 3000
-
-CMD ["node", "dist/index.js"]
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
