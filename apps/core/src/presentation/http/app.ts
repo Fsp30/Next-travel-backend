@@ -63,7 +63,7 @@ export async function createApp(
   await fastify.register(import('@fastify/cors'), {
     origin:
       process.env.NODE_ENV === 'production'
-        ? process.env.CORS_ORIGIN?.split(',') ?? true
+        ? (process.env.CORS_ORIGIN?.split(',') ?? true)
         : 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
