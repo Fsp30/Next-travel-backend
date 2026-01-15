@@ -22,6 +22,6 @@ ENV NODE_ENV=production
 ENV PORT=8080
 ENV REDIS_URL=redis://127.0.0.1:6379
 
-EXPOSE 8080 6379
+EXPOSE 8080 
 
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
