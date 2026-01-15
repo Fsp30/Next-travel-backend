@@ -33,7 +33,9 @@ export async function authMiddleware(
     let token: string | undefined;
 
     if (request.cookies?.access_token) {
-      token = request.cookies.access_token;
+      token =
+        request.cookies.access_token ||
+        request.headers.authorization?.replace('Bearer ', '');
       console.log('[Auth] Token encontrado no cookie');
     } else if (request.headers.authorization) {
       const authHeader = request.headers.authorization;
