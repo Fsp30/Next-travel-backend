@@ -28,11 +28,11 @@ async function start() {
     });
 
     redis.on('connect', () => {
-      console.log('✅ [Server] Redis conectado');
+      console.log('[Server] Redis conectado');
     });
 
     redis.on('error', (err) => {
-      console.error('❌ [Server] Erro no Redis:', err);
+      console.error('[Server] Erro no Redis:', err);
     });
 
     await prisma.$connect();
