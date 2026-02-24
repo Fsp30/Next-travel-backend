@@ -11,4 +11,4 @@ export type {
   GenerateTravelGuideOutput,
 } from './types';
 export type { ILLMService } from './interfaces/llm.service.inteface';
-export { LLMService } from './services';
+export { LLMService } from './services'
